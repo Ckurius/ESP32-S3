@@ -139,12 +139,12 @@ In diesem Guide steckt viel Mess‑ und Detailarbeit. Wenn er dir geholfen hat, 
 
 Dieses Projekt ist **dual lizenziert**:
 
-- **Code** (HTML, CSS, JavaScript) — [MIT‑Lizenz](LICENSE)
-- **Inhalte** (Texte, Mess‑Ergebnisse, Tabellen, Grafiken) — [CC BY 4.0](LICENSE-CONTENT)
+- **Code** (HTML, CSS, JavaScript) — [MIT‑Lizenz](https://github.com/Ckurius/ESP32-S3/blob/main/LICENSE)
+- **Inhalte** (Texte, Mess‑Ergebnisse, Tabellen, Grafiken) — [CC BY 4.0](https://github.com/Ckurius/ESP32-S3/blob/main/LICENSE-CONTENT)
 
 Du darfst die Inhalte teilen und weiterverarbeiten, auch kommerziell, solange du den Urheber nennst und auf die Lizenz verlinkst. Vorgeschlagene Namensnennung:
 
-> „ESP32‑S3 N16R8 Board Guide" von Chris, lizenziert unter CC BY 4.0. Quelle: <https://esp32-s3.mculab.workers.dev/>
+> „ESP32‑S3 N16R8 Board Guide" von Chris, lizenziert unter CC BY 4.0. Quelle: <https://github.com/Ckurius/ESP32-S3>
 
 ## 👤 Autor
 
