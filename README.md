@@ -1,10 +1,14 @@
 ESP32‑S3 N16R8 — Interaktiver Board‑Guide 🔬
 Der vollständige Guide zum ESP32‑S3 N16R8 (16 MB Flash · 8 MB Octal‑PSRAM · WiFi + BLE 5 · 2× USB‑C) — mit echten Messwerten, interaktivem Pinout, Forensik (echt oder Klon?) und Firmware‑Benchmarks. Alle Werte real am Board erhoben, keine Datenblatt‑Abschriften.
 
-  
-  
-  
-  
+<p align="left">
+  <img alt="HTML5" src="https://img.shields.io/badge/HTML5-E34F26?logo=html5&logoColor=white">
+  <img alt="JavaScript" src="https://img.shields.io/badge/Vanilla_JS-F7DF1E?logo=javascript&logoColor=black">
+  <img alt="Zero Dependencies" src="https://img.shields.io/badge/Dependencies-0-success">
+  <img alt="Hardware" src="https://img.shields.io/badge/Hardware-ESP32--S3_N16R8-FF5B4A">
+  <img alt="Sprache" src="https://img.shields.io/badge/Sprache-Deutsch-blue">
+  <img alt="License" src="https://img.shields.io/badge/License-MIT-green">
+</p>  
   
   
 
