@@ -1,0 +1,55 @@
+Creative Commons Attribution 4.0 International (CC BY 4.0)
+=========================================================
+
+This license applies to the *content* of this repository — the documentation,
+explanatory text, measurement results, tables, and other written or visual
+material of the ESP32-S3 N16R8 Board Guide.
+
+The source code (HTML, CSS, JavaScript) is licensed separately under the MIT
+License; see the LICENSE file.
+
+Copyright (c) 2026 Chris
+
+
+You are free to:
+
+  * Share — copy and redistribute the material in any medium or format.
+  * Adapt — remix, transform, and build upon the material for any purpose,
+    even commercially.
+
+The licensor cannot revoke these freedoms as long as you follow the license
+terms.
+
+
+Under the following term:
+
+  * Attribution — You must give appropriate credit, provide a link to the
+    license, and indicate if changes were made. You may do so in any reasonable
+    manner, but not in any way that suggests the licensor endorses you or your
+    use.
+
+No additional restrictions — You may not apply legal terms or technological
+measures that legally restrict others from doing anything the license permits.
+
+
+Suggested attribution when reusing this content
+-----------------------------------------------
+
+  "ESP32-S3 N16R8 Board Guide" by Chris, licensed under CC BY 4.0.
+  Source: https://esp32-s3.mculab.workers.dev/
+
+
+Full license text
+------------------
+
+This file is a notice, not the full license. The complete, legally binding
+text of the CC BY 4.0 license is available here:
+
+  https://creativecommons.org/licenses/by/4.0/legalcode
+
+A plain-language summary (which is not a substitute for the license) is at:
+
+  https://creativecommons.org/licenses/by/4.0/
+
+The text of the Creative Commons public licenses is dedicated to the public
+domain under the CC0 Public Domain Dedication.
