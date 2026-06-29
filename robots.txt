@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://esp32-s3.mculab.workers.dev/sitemap.xml

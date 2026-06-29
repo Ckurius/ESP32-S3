@@ -1,0 +1,1330 @@
+<!DOCTYPE html>
+<html lang="de" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="description" content="ESP32-S3 N16R8 (16 MB Flash, 8 MB Octal-PSRAM) im Detail: echte Messwerte, Pinout, Benchmarks (MicroPython vs. ESP-IDF), Forensik (echt oder Klon?) und Troubleshooting – alles real am Board gemessen.">
+<meta name="theme-color" content="#0a0c12" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="#f5f7fc" media="(prefers-color-scheme: light)">
+<meta name="color-scheme" content="dark light">
+<title>ESP32-S3 N16R8 Test & Benchmark – Pinout, Forensik & Octal-PSRAM Guide</title>
+
+<!-- Google Search Console: Verifizierung der URL-Praefix-Property
+     (Methode "HTML-Tag"). Nach erfolgreicher Bestaetigung NICHT entfernen. -->
+<meta name="google-site-verification" content="a9ul-34_tnZxSwGEzy05bc0NtrsoTGB1WgnvlmcHrlw" />
+<!-- Bing Webmaster Tools Verifizierung. Nach erfolgreicher Bestaetigung nicht entfernen. -->
+<meta name="msvalidate.01" content="DA2AB25F30F3CF6F619888BC9E151940" />
+
+<!-- Canonical & Sprachversionen -->
+<link rel="canonical" href="https://esp32-s3.mculab.workers.dev/">
+<link rel="alternate" hreflang="de" href="https://esp32-s3.mculab.workers.dev/">
+<link rel="alternate" hreflang="en" href="https://esp32-s3.mculab.workers.dev/index-en.html">
+<link rel="alternate" hreflang="x-default" href="https://esp32-s3.mculab.workers.dev/">
+
+<!-- Open Graph / Twitter (Link-Vorschau in Foren, Reddit, Messengern).
+     og-image.png: Screenshot der Seite, 1200x630 px, ins Verzeichnis legen. -->
+<meta property="og:type" content="article">
+<meta property="og:locale" content="de_DE">
+<meta property="og:locale:alternate" content="en_US">
+<meta property="og:site_name" content="ESP32-S3 N16R8 Board-Guide">
+<meta property="og:title" content="ESP32-S3 N16R8 – kompletter Board-Guide mit echten Messwerten">
+<meta property="og:description" content="Pinout, Benchmarks, Forensik (echt oder Klon?) und Troubleshooting – alle Werte real am Board gemessen.">
+<meta property="og:url" content="https://esp32-s3.mculab.workers.dev/">
+<meta property="og:image" content="https://esp32-s3.mculab.workers.dev/og-image.png">
+<meta property="og:image:secure_url" content="https://esp32-s3.mculab.workers.dev/og-image.png">
+<meta property="og:image:type" content="image/png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="ESP32-S3 N16R8 Board-Guide – 16 MB Flash, 8 MB Octal-PSRAM, WiFi + BLE 5">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="ESP32-S3 N16R8 – kompletter Board-Guide mit echten Messwerten">
+<meta name="twitter:description" content="Pinout, Benchmarks, Forensik & Troubleshooting – alle Werte real gemessen.">
+<meta name="twitter:image" content="https://esp32-s3.mculab.workers.dev/og-image.png">
+
+<!-- Strukturierte Daten: TechArticle -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "TechArticle",
+  "headline": "ESP32-S3 N16R8 – Board-Guide mit echten Messwerten",
+  "description": "Pinout, Benchmarks (MicroPython vs. ESP-IDF vs. idf-max), Forensik und Troubleshooting des ESP32-S3 N16R8 (16 MB Flash, 8 MB Octal-PSRAM).",
+  "inLanguage": "de",
+  "url": "https://esp32-s3.mculab.workers.dev/",
+  "image": "https://esp32-s3.mculab.workers.dev/og-image.png",
+  "author": { "@type": "Person", "name": "Chris" },
+  "publisher": { "@type": "Person", "name": "Chris" },
+  "datePublished": "2026-06-01",
+  "dateModified": "2026-06-13",
+  "about": {
+    "@type": "Product",
+    "name": "ESP32-S3 N16R8 DevKitC-1 (YD-ESP32-S3-Klon)",
+    "description": "ESP32-S3-Entwicklungsboard mit 16 MB Flash, 8 MB Octal-PSRAM, 2x USB-C und CH343-UART-Bruecke."
+  },
+  "keywords": "ESP32-S3, N16R8, YD-ESP32-S3, Octal-PSRAM, MicroPython, ESP-IDF, Benchmark, Pinout, Forensik, CH343, SPIRAM_OCT"
+}
+</script>
+
+<!-- Strukturierte Daten: FAQPage (entspricht dem sichtbaren Troubleshooting-Bereich) -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "inLanguage": "de",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "ESP32-S3 N16R8 zeigt nur ~300 KB RAM statt 8 MB – warum?",
+      "acceptedAnswer": { "@type": "Answer", "text": "Es wurde die Nicht-Octal-Firmware geflasht. Loesung: die SPIRAM_OCT-Variante von MicroPython verwenden – nur sie aktiviert die 8 MB Octal-PSRAM des N16R8." }
+    },
+    {
+      "@type": "Question",
+      "name": "Es erscheint kein /dev/ttyUSB0, sondern /dev/ttyACM0 – ist das Board defekt?",
+      "acceptedAnswer": { "@type": "Answer", "text": "Nein. Dieses Board nutzt die CH343-UART-Bruecke mit dem cdc_acm-Treiber. Das Geraet heisst daher /dev/ttyACM0, nicht ttyUSB0. Suche nach ttyACM* statt ttyUSB*." }
+    },
+    {
+      "@type": "Question",
+      "name": "Permission denied beim Zugriff auf den seriellen Port – wie behebe ich das?",
+      "acceptedAnswer": { "@type": "Answer", "text": "Dein Benutzer ist nicht in der Gruppe dialout. Loesung: sudo usermod -aG dialout $USER und neu anmelden. Sofort-Fix: sudo chmod a+rw /dev/ttyACM0." }
+    },
+    {
+      "@type": "Question",
+      "name": "Mein ESP32-S3 stuerzt bei Nutzung von GPIO 33–37 ab – woran liegt das?",
+      "acceptedAnswer": { "@type": "Answer", "text": "Beim N16R8 sind GPIO 33–37 fest fuer die Octal-PSRAM belegt. Jede Beschaltung laesst den Cache abstuerzen. Nutze stattdessen die freien Pins 1–18, 21, 38–42 und 47." }
+    },
+    {
+      "@type": "Question",
+      "name": "Ist ein als DevKitC-1-N16R8 verkauftes Board echt oder ein Klon?",
+      "acceptedAnswer": { "@type": "Answer", "text": "Ein fertiges DevKitC-1-N16R8 ist keine offizielle Espressif-Variante – meist ein Drittanbieter-Klon (oft YD-ESP32-S3) mit echtem Espressif-Silizium, erkennbar an USB-C und CH343-Bruecke statt Micro-USB und CP2102N. Echte 8 MB Octal-PSRAM und 16 MB Flash lassen sich per Laufzeittest bestaetigen." }
+    },
+    {
+      "@type": "Question",
+      "name": "Welchen der zwei USB-C-Ports nehme ich zum Flashen?",
+      "acceptedAnswer": { "@type": "Answer", "text": "Den COM-Port an der CH343-Bruecke (Aufdruck COM). Er hat Auto-Reset und funktioniert mit jedem Tool. Der zweite Port ist der native USB des SoC (USB-Serial-JTAG, 303a:1001) – schneller, aber fuer den Standard-Flash-Workflow nicht noetig." }
+    }
+  ]
+}
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<script>
+  // Dark-Mode standardmäßig anwenden, bevor die Seite rendert (kein Flash)
+  (function () {
+    var t = localStorage.getItem('theme') || 'dark';
+    document.documentElement.setAttribute('data-theme', t);
+  })();
+</script>
+<style>
+:root{
+  --accent:#ff5b4a; --accent2:#ffac42; --accent3:#36d6c3;
+  --grad:linear-gradient(120deg,var(--accent),var(--accent2));
+  --grad2:linear-gradient(120deg,#7c5cff,var(--accent3));
+  --r:18px; --maxw:1160px;
+  --ff:'Inter',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
+  --mono:'JetBrains Mono',ui-monospace,'SF Mono',Consolas,monospace;
+  --t:.25s cubic-bezier(.4,0,.2,1);
+}
+[data-theme="dark"]{
+  --bg:#0a0c12; --bg2:#10131c; --card:#141926; --card2:#1b2231;
+  --line:#262e42; --tx:#eef1f8; --tx2:#9aa6c0; --tx3:#6b768f;
+  --shadow:0 18px 50px -22px rgba(0,0,0,.8);
+  --glass:rgba(20,25,38,.72);
+}
+[data-theme="light"]{
+  --bg:#f5f7fc; --bg2:#eef1f8; --card:#ffffff; --card2:#f6f8fd;
+  --line:#e2e7f2; --tx:#10131c; --tx2:#4a5575; --tx3:#8b96b0;
+  --shadow:0 18px 50px -26px rgba(40,55,90,.34);
+  --glass:rgba(255,255,255,.78);
+}
+*{box-sizing:border-box;margin:0;padding:0;min-width:0}
+html{scroll-behavior:smooth;scroll-padding-top:80px;-webkit-text-size-adjust:100%;text-size-adjust:100%}
+body{font-family:var(--ff);background:var(--bg);color:var(--tx);line-height:1.65;
+  -webkit-font-smoothing:antialiased;overflow-x:hidden;overflow-wrap:break-word;
+  transition:background var(--t),color var(--t)}
+img,svg,video,canvas{max-width:100%;height:auto}
+a{color:inherit;text-decoration:none}
+.wrap{max-width:var(--maxw);margin:0 auto;padding:0 22px}
+section{padding:84px 0;position:relative}
+h2{font-size:clamp(1.7rem,4vw,2.6rem);font-weight:800;letter-spacing:-.02em;line-height:1.15}
+h3{font-size:1.18rem;font-weight:700;letter-spacing:-.01em}
+.muted{color:var(--tx2)}
+.grad-tx{background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+
+/* ---------- NAV ---------- */
+header.nav{position:sticky;top:0;z-index:50;backdrop-filter:blur(16px);
+  background:var(--glass);border-bottom:1px solid var(--line);transition:var(--t)}
+.nav-in{display:flex;align-items:center;gap:18px;height:64px}
+.brand{display:flex;align-items:center;gap:10px;font-weight:800;letter-spacing:-.02em;font-size:1.05rem;white-space:nowrap;flex-shrink:0}
+.brand .dot{width:30px;height:30px;border-radius:9px;background:var(--grad);display:grid;place-items:center;
+  font-size:.85rem;color:#fff;font-weight:900;box-shadow:0 6px 18px -6px var(--accent)}
+.nav-links{display:flex;flex-wrap:nowrap;gap:2px;margin-left:auto}
+.nav-links a{padding:7px 10px;border-radius:10px;font-size:.85rem;font-weight:500;color:var(--tx2);white-space:nowrap;transition:var(--t)}
+.nav-links a:hover{color:var(--tx);background:var(--card2)}
+.icon-btn{width:40px;height:40px;border-radius:11px;border:1px solid var(--line);background:var(--card);
+  color:var(--tx);display:grid;place-items:center;cursor:pointer;transition:var(--t);font-size:1.1rem}
+.icon-btn:hover{border-color:var(--accent);transform:translateY(-1px)}
+.lang-btn{width:auto;padding:0 13px;font-size:.85rem;font-weight:700;letter-spacing:.02em;
+  font-family:var(--ff);text-decoration:none}
+.burger{display:none}
+@media(max-width:1180px){
+  .nav-links{position:fixed;inset:64px 0 auto 0;flex-direction:column;background:var(--bg2);
+    border-bottom:1px solid var(--line);padding:14px 22px;gap:2px;transform:translateY(-130%);
+    transition:transform var(--t);box-shadow:var(--shadow)}
+  .nav-links.open{transform:translateY(0)}
+  .nav-links a{padding:12px 14px}
+  .burger{display:grid;margin-left:auto}
+}
+
+/* ---------- HERO ---------- */
+.hero{padding:60px 0 70px;position:relative;overflow:hidden}
+.hero::before{content:"";position:absolute;inset:-40% -10% auto -10%;height:680px;z-index:-1;
+  background:radial-gradient(60% 60% at 20% 10%,rgba(255,91,74,.22),transparent 60%),
+             radial-gradient(50% 50% at 85% 0%,rgba(54,214,195,.18),transparent 60%);
+  filter:blur(8px)}
+.badge{display:inline-flex;align-items:center;gap:8px;padding:6px 14px;border-radius:999px;
+  border:1px solid var(--line);background:var(--card);font-size:.8rem;font-weight:600;color:var(--tx2);margin-bottom:22px}
+.badge .pulse{width:8px;height:8px;border-radius:50%;background:var(--accent3);box-shadow:0 0 0 0 var(--accent3);
+  animation:pulse 2s infinite}
+@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(54,214,195,.6)}70%{box-shadow:0 0 0 9px rgba(54,214,195,0)}100%{box-shadow:0 0 0 0 rgba(54,214,195,0)}}
+.hero h1{font-size:clamp(2.4rem,7vw,4.6rem);font-weight:900;letter-spacing:-.035em;line-height:1.02}
+.hero p.lead{font-size:clamp(1.05rem,2.4vw,1.3rem);color:var(--tx2);max-width:640px;margin:22px 0 30px}
+.hero-cta{display:flex;gap:12px;flex-wrap:wrap}
+.btn{padding:13px 24px;border-radius:13px;font-weight:700;font-size:.95rem;cursor:pointer;border:1px solid transparent;transition:var(--t)}
+.btn-primary{background:var(--grad);color:#fff;box-shadow:0 14px 34px -12px var(--accent)}
+.btn-primary:hover{transform:translateY(-2px);box-shadow:0 20px 40px -12px var(--accent)}
+.btn-ghost{background:var(--card);border-color:var(--line);color:var(--tx)}
+.btn-ghost:hover{border-color:var(--accent);transform:translateY(-2px)}
+.hero-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-top:52px}
+@media(max-width:680px){.hero-stats{grid-template-columns:repeat(2,1fr)}}
+.stat{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:20px;transition:var(--t)}
+.stat:hover{transform:translateY(-4px);border-color:var(--accent)}
+.stat .v{font-size:1.7rem;font-weight:900;letter-spacing:-.02em;background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+.stat .k{font-size:.82rem;color:var(--tx2);font-weight:500;margin-top:2px}
+
+/* ---------- SECTION HEAD ---------- */
+.shead{margin-bottom:42px;max-width:680px}
+.kicker{display:inline-block;font-size:.78rem;font-weight:800;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--accent);margin-bottom:12px}
+.shead p{color:var(--tx2);margin-top:12px;font-size:1.05rem}
+
+/* ---------- CARDS GRID ---------- */
+.grid{display:grid;gap:18px}
+.g3{grid-template-columns:repeat(3,1fr)}
+.g2{grid-template-columns:repeat(2,1fr)}
+@media(max-width:860px){.g3{grid-template-columns:1fr 1fr}.g2{grid-template-columns:1fr}}
+@media(max-width:560px){.g3{grid-template-columns:1fr}}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:24px;transition:var(--t);position:relative;overflow:hidden}
+.card:hover{transform:translateY(-4px);border-color:color-mix(in srgb,var(--accent) 50%,var(--line));box-shadow:var(--shadow)}
+.card .ico{width:46px;height:46px;border-radius:13px;background:var(--card2);display:grid;place-items:center;font-size:1.4rem;margin-bottom:16px;border:1px solid var(--line)}
+.card h3{margin-bottom:6px}
+.card p{color:var(--tx2);font-size:.94rem}
+.spec-row{display:flex;justify-content:space-between;gap:10px;padding:9px 0;border-bottom:1px dashed var(--line);font-size:.92rem}
+.spec-row:last-child{border-bottom:0}
+.spec-row .lbl{color:var(--tx2)}
+.spec-row .val{font-weight:700;text-align:right}
+.tag{display:inline-block;font-family:var(--mono);font-size:.72rem;font-weight:700;padding:2px 8px;border-radius:7px;
+  background:var(--card2);border:1px solid var(--line);color:var(--tx2)}
+.callout code,.card p code{font-family:var(--mono);background:var(--card2);padding:1px 6px;border-radius:6px;
+  font-size:.82em;border:1px solid var(--line);color:var(--tx)}
+.subhead{font-size:1.25rem;font-weight:800;letter-spacing:-.01em;display:flex;align-items:center;gap:10px}
+.toolcard .codeblock{margin:14px 0}
+.toolcard .callout{margin-top:0}
+
+/* ---------- GPIO ---------- */
+.filters{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:22px}
+.fbtn{padding:8px 15px;border-radius:10px;border:1px solid var(--line);background:var(--card);color:var(--tx2);
+  font-weight:600;font-size:.85rem;cursor:pointer;transition:var(--t)}
+.fbtn:hover{color:var(--tx)}
+.fbtn.active{background:var(--grad);color:#fff;border-color:transparent}
+.pingrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(132px,1fr));gap:11px}
+.pin{background:var(--card);border:1px solid var(--line);border-radius:13px;padding:13px 14px;transition:var(--t);cursor:default;position:relative}
+.pin:hover{transform:translateY(-3px);box-shadow:var(--shadow)}
+.pin .gp{font-family:var(--mono);font-weight:700;font-size:1.02rem;display:flex;align-items:center;gap:7px}
+.pin .fn{font-size:.78rem;color:var(--tx2);margin-top:3px;min-height:18px}
+.pin .stripe{position:absolute;left:0;top:12px;bottom:12px;width:4px;border-radius:4px}
+.pdot{width:9px;height:9px;border-radius:50%;display:inline-block}
+.pin.c-free .stripe,.pin.c-free .pdot,.lg-free{background:#36d6c3}
+.pin.c-taboo .stripe,.pin.c-taboo .pdot,.lg-taboo{background:#ff5b4a}
+.pin.c-strap .stripe,.pin.c-strap .pdot,.lg-strap{background:#ffac42}
+.pin.c-special .stripe,.pin.c-special .pdot,.lg-special{background:#7c5cff}
+.pin .badges{display:flex;gap:4px;margin-top:8px;flex-wrap:wrap}
+.mini{font-family:var(--mono);font-size:.62rem;font-weight:700;padding:1px 6px;border-radius:6px;border:1px solid var(--line);color:var(--tx2)}
+.legend{display:flex;gap:18px;flex-wrap:wrap;margin-top:22px;font-size:.85rem;color:var(--tx2)}
+.legend span{display:flex;align-items:center;gap:7px}
+.lg{width:12px;height:12px;border-radius:4px;display:inline-block}
+
+/* ---------- BENCHMARKS ---------- */
+.bench{display:flex;flex-direction:column;gap:18px}
+.brow .top{display:flex;justify-content:space-between;font-size:.92rem;margin-bottom:7px}
+.brow .top b{font-weight:700}
+.brow .top .num{font-family:var(--mono);font-weight:700;color:var(--accent)}
+.track{height:13px;background:var(--card2);border-radius:999px;overflow:hidden;border:1px solid var(--line)}
+.fill{height:100%;width:0;border-radius:999px;background:var(--grad);transition:width 1.3s cubic-bezier(.2,.7,.2,1)}
+.fill.alt{background:var(--grad2)}
+/* ---- Vergleichsbalken MicroPython vs ESP-IDF ---- */
+.cmp{margin:0 0 20px}
+.cmp:last-child{margin-bottom:0}
+.cmp-head{display:flex;justify-content:space-between;align-items:baseline;gap:10px;flex-wrap:wrap;margin-bottom:8px}
+.cmp-head b{font-size:.98rem}
+.cmp-gain{font-family:var(--mono);font-size:.72rem;font-weight:700;color:#fff;background:var(--grad);padding:3px 10px;border-radius:999px;white-space:nowrap}
+.cmp-gain.flat{color:var(--tx2);background:var(--card2);border:1px solid var(--line)}
+/* Gewinner-Chip in der Farbe des fuehrenden Balkens (Default = ESP-IDF orange) */
+.cmp-gain.win-max{background:linear-gradient(90deg,#1f9e8f,#36d6c3);color:#04241f}
+.cmp-gain.win-mp{background:linear-gradient(90deg,#4a5570,#97a2bd);color:#fff}
+.cmp-row{display:flex;align-items:center;gap:10px;margin:6px 0}
+.cmp-tag{flex:0 0 92px;font-size:.74rem;color:var(--tx2);font-weight:600;text-align:right}
+.cmp-track{flex:1;height:24px;min-width:0;background:var(--card2);border:1px solid var(--line);border-radius:9px;overflow:hidden}
+.cmp-track .fill{height:100%;width:0;border-radius:8px;transition:width 1.3s cubic-bezier(.2,.7,.2,1)}
+.cmp-track .fill.mp{background:linear-gradient(90deg,#4a5570,#97a2bd)}
+.cmp-track .fill.idf{background:var(--grad)}
+.cmp-track .fill.max{background:linear-gradient(90deg,#1f9e8f,#36d6c3)}
+.cmp-val{flex:0 0 116px;font-family:var(--mono);font-size:.78rem;font-weight:700;color:var(--tx2)}
+.cmp-val.hl{color:var(--accent)}
+@media(max-width:560px){.cmp-tag{flex-basis:66px;font-size:.7rem}.cmp-val{flex-basis:96px;font-size:.72rem}}
+
+/* ---------- COMPARE TABLE ---------- */
+.table-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:var(--r);background:var(--card)}
+table{border-collapse:collapse;width:100%;min-width:640px;font-size:.92rem}
+th,td{padding:14px 16px;text-align:left;border-bottom:1px solid var(--line)}
+th{font-weight:700;color:var(--tx);background:var(--card2);position:sticky;top:0}
+td.hl{font-weight:700}
+tr:last-child td{border-bottom:0}
+.yes{color:#36d6c3;font-weight:700}.no{color:#ff5b4a;font-weight:700}
+.col-this{background:color-mix(in srgb,var(--accent) 8%,transparent)}
+
+/* ---------- CODE ---------- */
+.tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px}
+.tab{padding:9px 16px;border-radius:10px;border:1px solid var(--line);background:var(--card);color:var(--tx2);
+  font-weight:600;font-size:.86rem;cursor:pointer;transition:var(--t)}
+.tab.active{background:var(--card2);color:var(--tx);border-color:var(--accent)}
+.codeblock{position:relative;background:#0d1018;border:1px solid var(--line);border-radius:14px;overflow:hidden}
+[data-theme="light"] .codeblock{background:#0d1018}
+.codeblock pre{margin:0;padding:20px 18px;overflow-x:auto}
+.codeblock code{font-family:var(--mono);font-size:.85rem;line-height:1.7;color:#cdd6f4;white-space:pre}
+.codeblock .cmt{color:#6b768f}.codeblock .kw{color:#ff8a8a}.codeblock .st{color:#a6e3a1}.codeblock .fn{color:#89b4fa}.codeblock .nm{color:#fab387}
+.copy{position:absolute;top:10px;right:10px;padding:6px 12px;border-radius:9px;border:1px solid #2a3350;
+  background:#161b29;color:#aeb8d4;font-size:.76rem;font-weight:700;cursor:pointer;transition:var(--t)}
+.copy:hover{border-color:var(--accent);color:#fff}
+.codepane{display:none}.codepane.active{display:block}
+
+/* ---------- CALLOUT ---------- */
+.callout{display:flex;gap:14px;padding:16px 18px;border-radius:14px;border:1px solid var(--line);background:var(--card);margin-top:16px}
+.callout.warn{border-color:color-mix(in srgb,var(--accent) 45%,var(--line));background:color-mix(in srgb,var(--accent) 7%,var(--card))}
+.callout.ok{border-color:color-mix(in srgb,#36d6c3 45%,var(--line));background:color-mix(in srgb,#36d6c3 7%,var(--card))}
+.callout .ic{font-size:1.3rem;flex-shrink:0}
+.callout div{font-size:.92rem;color:var(--tx2)}.callout b{color:var(--tx)}
+
+/* ---------- STEPS ---------- */
+.steps{counter-reset:s;display:flex;flex-direction:column;gap:14px}
+.step{display:flex;gap:16px;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px}
+.step::before{counter-increment:s;content:counter(s);flex-shrink:0;width:34px;height:34px;border-radius:10px;
+  background:var(--grad);color:#fff;font-weight:900;display:grid;place-items:center;font-size:.95rem}
+.step h3{font-size:1rem;margin-bottom:3px}.step p{font-size:.9rem;color:var(--tx2)}
+.step code{font-family:var(--mono);background:var(--card2);padding:2px 7px;border-radius:6px;font-size:.82rem;border:1px solid var(--line)}
+
+/* reveal */
+.reveal{opacity:0;transform:translateY(26px);transition:opacity .7s ease,transform .7s cubic-bezier(.2,.7,.2,1)}
+.reveal.in{opacity:1;transform:none}
+
+footer{border-top:1px solid var(--line);padding:40px 0;color:var(--tx3);font-size:.86rem;text-align:center}
+footer b{color:var(--tx2)}
+.divider{height:1px;background:linear-gradient(90deg,transparent,var(--line),transparent);margin:0}
+.codeblock pre{-webkit-overflow-scrolling:touch}
+.table-wrap{-webkit-overflow-scrolling:touch}
+
+/* ---------- MOBILE-OPTIMIERUNG ---------- */
+@media(max-width:640px){
+  section{padding:60px 0}
+  .wrap{padding:0 16px}
+  h2{font-size:clamp(1.5rem,6.5vw,2rem)}
+  .shead{margin-bottom:30px}
+  .shead p{font-size:.98rem}
+  .card{padding:20px}
+  .pingrid{grid-template-columns:repeat(auto-fill,minmax(116px,1fr));gap:9px}
+  .codeblock code{font-size:.8rem}
+  .legend{gap:12px 16px}
+}
+@media(max-width:480px){
+  .hero{padding:36px 0 46px}
+  .hero h1{font-size:clamp(2rem,9vw,2.6rem)}
+  .hero-cta{flex-direction:column}
+  .hero-cta .btn{width:100%;text-align:center}
+  .hero-stats{grid-template-columns:1fr 1fr;gap:10px;margin-top:34px}
+  .stat{padding:16px}
+  .stat .v{font-size:1.45rem}
+  .filters{gap:6px}
+  .fbtn{padding:7px 12px;font-size:.8rem}
+  .tab{padding:8px 13px;font-size:.82rem}
+  .step{padding:15px;gap:13px}
+  th,td{padding:11px 12px;font-size:.86rem}
+  .nav-in{gap:10px}
+  .brand{font-size:.98rem}
+}
+@media(max-width:340px){
+  .hero-stats{grid-template-columns:1fr}
+  .pingrid{grid-template-columns:1fr 1fr}
+}
+
+/* ---------- NACH-OBEN-BUTTON ---------- */
+#toTop{position:fixed;right:18px;bottom:18px;width:46px;height:46px;border-radius:14px;
+  border:1px solid var(--line);background:var(--glass);backdrop-filter:blur(10px);color:var(--tx);
+  font-size:1.25rem;font-weight:700;cursor:pointer;display:grid;place-items:center;
+  opacity:0;pointer-events:none;transform:translateY(12px);transition:var(--t);z-index:60;box-shadow:var(--shadow)}
+#toTop.show{opacity:1;pointer-events:auto;transform:none}
+#toTop:hover{border-color:var(--accent);color:var(--accent);transform:translateY(-2px)}
+@media(max-width:480px){#toTop{right:14px;bottom:14px;width:42px;height:42px}}
+
+/* ---------- KAFFEE / SUPPORT ---------- */
+.coffee-link{color:var(--accent);font-weight:600;cursor:pointer;border-bottom:1px dashed color-mix(in srgb,var(--accent) 55%,transparent)}
+.coffee-link:hover{border-bottom-style:solid}
+.support{max-width:560px;margin:0 auto;text-align:center;background:var(--card);border:1px solid var(--line);
+  border-radius:var(--r);padding:34px 24px;position:relative;overflow:hidden}
+.support::before{content:"";position:absolute;inset:0 0 auto 0;height:3px;background:var(--grad)}
+.support .cup{font-size:2.4rem;line-height:1;margin-bottom:10px}
+.support h3{font-size:1.3rem;margin-bottom:8px}
+.support p{color:var(--tx2);font-size:.96rem;max-width:430px;margin:0 auto 20px}
+.coffee-pill{position:fixed;left:18px;bottom:18px;display:flex;align-items:center;gap:6px;
+  padding:9px 10px 9px 14px;border-radius:14px;border:1px solid var(--line);background:var(--glass);
+  backdrop-filter:blur(10px);box-shadow:var(--shadow);z-index:60;
+  opacity:0;pointer-events:none;transform:translateY(12px);transition:var(--t)}
+.coffee-pill.show{opacity:1;pointer-events:auto;transform:none}
+.coffee-pill:hover{border-color:var(--accent);transform:translateY(-2px)}
+.coffee-pill .cp-link{font-weight:700;font-size:.9rem;color:var(--tx);cursor:pointer;text-decoration:none}
+.coffee-pill:hover .cp-link{color:var(--accent)}
+.coffee-pill .x{display:grid;place-items:center;width:22px;height:22px;border-radius:8px;border:0;
+  background:transparent;color:var(--tx3);font-size:1.05rem;line-height:1;cursor:pointer;padding:0}
+.coffee-pill .x:hover{color:var(--accent);background:var(--card2)}
+@media(max-width:480px){.coffee-pill{left:14px;bottom:14px;padding:8px 9px 8px 12px}.coffee-pill .cp-link{font-size:.84rem}}
+
+/* ---------- LINK-KARTEN / RESSOURCEN ---------- */
+.linkcard{display:flex;gap:14px;align-items:flex-start;background:var(--card);border:1px solid var(--line);
+  border-radius:var(--r);padding:18px 20px;transition:var(--t);text-decoration:none;color:inherit}
+.linkcard:hover{transform:translateY(-3px);border-color:color-mix(in srgb,var(--accent) 50%,var(--line));box-shadow:var(--shadow)}
+.linkcard .lc-ico{font-size:1.5rem;line-height:1.2;flex-shrink:0}
+.linkcard .lc-body{flex:1;min-width:0}
+.linkcard h3{font-size:1rem;margin-bottom:3px}
+.linkcard p{color:var(--tx2);font-size:.86rem;margin:0;overflow-wrap:anywhere}
+.linkcard .lc-host{font-family:var(--mono);font-size:.72rem;color:var(--accent);margin-top:7px;display:inline-block}
+.cat-label{font-size:.8rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--tx2);margin:28px 0 12px}
+.cat-label:first-of-type{margin-top:0}
+</style>
+<link rel="alternate" hreflang="de" href="index.html">
+<link rel="alternate" hreflang="en" href="index-en.html">
+<link rel="alternate" hreflang="x-default" href="index.html">
+</head>
+<body>
+
+<!-- NAV -->
+<header class="nav">
+  <div class="wrap nav-in">
+    <a href="#top" class="brand"><span class="dot">S3</span> ESP32-S3 <span class="muted" style="font-weight:600">N16R8</span></a>
+    <nav class="nav-links" id="navlinks">
+      <a href="#specs">Technik</a>
+      <a href="#pinout">Pinout</a>
+      <a href="#usage">Nutzung</a>
+      <a href="#compare">Vergleich</a>
+      <a href="#forensik">Forensik</a>
+      <a href="#bench">Benchmarks</a>
+      <a href="#recipes">Code</a>
+      <a href="#tools">Werkzeuge</a>
+      <a href="#trouble">Stolperfallen</a>
+      <a href="#official">Offiziell</a>
+      <a href="#ressourcen">Links</a>
+    </nav>
+    <a class="icon-btn lang-btn" id="langSwitch" href="index-en.html" hreflang="en" lang="en" aria-label="Switch to English version" title="Switch to English">English</a>
+    <button class="icon-btn" id="theme" title="Hell/Dunkel" aria-label="Theme wechseln">🌙</button>
+    <button class="icon-btn burger" id="burger" aria-label="Menü">☰</button>
+  </div>
+</header>
+
+<!-- HERO -->
+<a id="top"></a>
+<section class="hero">
+  <div class="wrap">
+    <span class="badge reveal"><span class="pulse"></span> Alle Werte real auf diesem Board gemessen</span>
+    <h1 class="reveal">Das <span class="grad-tx">ESP32‑S3 N16R8</span><br>bis ins Detail.</h1>
+    <p class="lead reveal">16 MB Flash · 8 MB <b>Octal</b>‑PSRAM · WiFi + BLE 5 · Dual‑Core LX7 + LP‑Core · 2× USB‑C. Der vollständige Guide mit Pinout, Anleitungen, Vergleich und echten Performance‑Messungen.</p>
+    <div class="hero-cta reveal">
+      <a href="#pinout" class="btn btn-primary">Pinout erkunden</a>
+      <a href="#recipes" class="btn btn-ghost">Code‑Rezepte →</a>
+    </div>
+    <div class="hero-stats">
+      <div class="stat reveal"><div class="v">16 MB</div><div class="k">Quad‑SPI Flash</div></div>
+      <div class="stat reveal"><div class="v">8 MB</div><div class="k">Octal‑PSRAM (OPI)</div></div>
+      <div class="stat reveal"><div class="v">240 MHz</div><div class="k">Dual‑Core LX7</div></div>
+      <div class="stat reveal"><div class="v">2,4 GHz</div><div class="k">WiFi + BLE 5</div></div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- SPECS -->
+<section id="specs">
+  <div class="wrap">
+    <div class="shead reveal">
+      <span class="kicker">Technische Daten</span>
+      <h2>Was im Modul steckt</h2>
+      <p>Verifiziert per <span class="tag">esptool</span> und <span class="tag">MicroPython</span> direkt auf dem Chip — keine Datenblatt‑Abschriften.</p>
+    </div>
+    <div class="grid g3">
+      <div class="card reveal">
+        <div class="ico">🧠</div><h3>Prozessor</h3>
+        <div class="spec-row"><span class="lbl">SoC</span><span class="val">ESP32‑S3 (QFN56)</span></div>
+        <div class="spec-row"><span class="lbl">Silizium‑Rev.</span><span class="val">v0.2</span></div>
+        <div class="spec-row"><span class="lbl">Kerne</span><span class="val">2× Xtensa LX7 + LP‑Core</span></div>
+        <div class="spec-row"><span class="lbl">Takt</span><span class="val">240 MHz (80/160/240)</span></div>
+        <div class="spec-row"><span class="lbl">SRAM</span><span class="val">512 KB</span></div>
+        <div class="spec-row"><span class="lbl">Quarz</span><span class="val">40 MHz</span></div>
+      </div>
+      <div class="card reveal">
+        <div class="ico">💾</div><h3>Speicher</h3>
+        <div class="spec-row"><span class="lbl">Flash</span><span class="val">16 MB · Quad · 3,3 V</span></div>
+        <div class="spec-row"><span class="lbl">Flash‑Chip</span><span class="val">Boya (0x68 / 0x4018)</span></div>
+        <div class="spec-row"><span class="lbl">PSRAM</span><span class="val">8 MB · <b>Octal (OPI)</b></span></div>
+        <div class="spec-row"><span class="lbl">PSRAM‑Test</span><span class="val">7 MB, 0 Fehler ✓</span></div>
+        <div class="spec-row"><span class="lbl">Dateisystem</span><span class="val">~14 MB LittleFS</span></div>
+      </div>
+      <div class="card reveal">
+        <div class="ico">📡</div><h3>Funk</h3>
+        <div class="spec-row"><span class="lbl">WiFi</span><span class="val">802.11 b/g/n · 2,4 GHz</span></div>
+        <div class="spec-row"><span class="lbl">Bluetooth</span><span class="val">5 LE (1M/2M/Coded)</span></div>
+        <div class="spec-row"><span class="lbl">Antenne</span><span class="val">onboard, RSSI bis −28 dBm</span></div>
+        <div class="spec-row"><span class="lbl">5 GHz</span><span class="val">nein (S3‑typisch)</span></div>
+        <div class="spec-row"><span class="lbl">MACs</span><span class="val">STA · AP+1 · BLE+2</span></div>
+      </div>
+      <div class="card reveal">
+        <div class="ico">🔌</div><h3>Anschlüsse</h3>
+        <div class="spec-row"><span class="lbl">USB‑C #1 „COM"</span><span class="val">CH343 → UART</span></div>
+        <div class="spec-row"><span class="lbl">USB‑C #2 „USB"</span><span class="val">nativer USB des S3</span></div>
+        <div class="spec-row"><span class="lbl">UART‑Brücke</span><span class="val">WCH CH343 (cdc_acm)</span></div>
+        <div class="spec-row"><span class="lbl">Geräte</span><span class="val">/dev/ttyACM* (nicht USB!)</span></div>
+        <div class="spec-row"><span class="lbl">Stromversorgung</span><span class="val">ein USB‑C genügt</span></div>
+      </div>
+      <div class="card reveal">
+        <div class="ico">🎛️</div><h3>Peripherie</h3>
+        <div class="spec-row"><span class="lbl">RGB‑LED</span><span class="val">WS2812 an GPIO48</span></div>
+        <div class="spec-row"><span class="lbl">ADC</span><span class="val">2× (GPIO1–20), V1‑Kalib.</span></div>
+        <div class="spec-row"><span class="lbl">Touch</span><span class="val">14 Kanäle (GPIO1–14)</span></div>
+        <div class="spec-row"><span class="lbl">Temp‑Sensor</span><span class="val">intern (≈32 °C idle)</span></div>
+        <div class="spec-row"><span class="lbl">CAN / TWAI</span><span class="val">vorhanden</span></div>
+      </div>
+      <div class="card reveal">
+        <div class="ico">🔐</div><h3>Sicherheit & Sonstiges</h3>
+        <div class="spec-row"><span class="lbl">Secure Boot</span><span class="val">aus (offen)</span></div>
+        <div class="spec-row"><span class="lbl">Flash‑Verschlüss.</span><span class="val">aus</span></div>
+        <div class="spec-row"><span class="lbl">JTAG</span><span class="val">aktiv</span></div>
+        <div class="spec-row"><span class="lbl">HW‑Crypto/RNG</span><span class="val">SHA/AES/RNG ✓</span></div>
+        <div class="spec-row"><span class="lbl">DAC / Hall</span><span class="val">keine (S3‑Serie)</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- PINOUT -->
+<section id="pinout">
+  <div class="wrap">
+    <div class="shead reveal">
+      <span class="kicker">Pinout & Ansteuerung</span>
+      <h2>Welche Pins du nutzen darfst</h2>
+      <p>Filtere die GPIOs nach Funktion. <b style="color:var(--accent)">Rot = tabu</b> (durch Flash/Octal‑PSRAM belegt) — diese Pins niemals beschalten, sonst stürzt der Cache ab. Die GPIOs 22–25 existieren beim S3 nicht.</p>
+    </div>
+    <div class="filters reveal" id="filters">
+      <button class="fbtn active" data-f="all">Alle</button>
+      <button class="fbtn" data-f="free">✅ Frei nutzbar</button>
+      <button class="fbtn" data-f="taboo">⛔ Tabu</button>
+      <button class="fbtn" data-f="strap">⚠️ Strapping</button>
+      <button class="fbtn" data-f="special">🔧 Spezial</button>
+      <button class="fbtn" data-f="adc">📊 ADC</button>
+      <button class="fbtn" data-f="touch">✋ Touch</button>
+    </div>
+    <div class="pingrid" id="pingrid"></div>
+    <div class="legend reveal">
+      <span><i class="lg lg-free"></i> Frei</span>
+      <span><i class="lg lg-taboo"></i> Tabu (Flash/PSRAM)</span>
+      <span><i class="lg lg-strap"></i> Strapping (Boot)</span>
+      <span><i class="lg lg-special"></i> Spezial (USB/UART/LED)</span>
+    </div>
+
+    <div class="grid g2" style="margin-top:34px">
+      <div class="card reveal">
+        <div class="ico">📌</div><h3>Merksätze für die Praxis</h3>
+        <p style="margin-bottom:10px"><b style="color:var(--tx)">Tabu:</b> GPIO 26–32 (SPI‑Flash) und <b style="color:var(--accent)">33–37 (Octal‑PSRAM)</b> — auch wenn herausgeführt: Finger weg.</p>
+        <p style="margin-bottom:10px"><b style="color:var(--tx)">Vorsicht beim Booten:</b> 0, 3, 45, 46 sind Strapping‑Pins.</p>
+        <p style="margin-bottom:10px"><b style="color:var(--tx)">Belegt bei USB‑Nutzung:</b> 19 (D−) / 20 (D+).</p>
+        <p><b style="color:var(--tx)">Frei & unkompliziert:</b> 1–18, 21, 38–42, 47.</p>
+      </div>
+      <div class="card reveal" style="padding:0;background:transparent;border:0">
+        <div class="codeblock">
+          <button class="copy">Kopieren</button>
+          <pre><code><span class="cmt"># RGB-LED an GPIO48 ansteuern</span>
+<span class="kw">import</span> neopixel, machine
+np = neopixel.<span class="fn">NeoPixel</span>(machine.<span class="fn">Pin</span>(<span class="nm">48</span>), <span class="nm">1</span>)
+np[<span class="nm">0</span>] = (<span class="nm">60</span>, <span class="nm">0</span>, <span class="nm">90</span>)   <span class="cmt"># RGB</span>
+np.<span class="fn">write</span>()
+
+<span class="cmt"># Freien Pin als Ausgang schalten</span>
+p = machine.<span class="fn">Pin</span>(<span class="nm">5</span>, machine.Pin.OUT)
+p.<span class="fn">value</span>(<span class="nm">1</span>)</code></pre>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- USAGE -->
+<section id="usage">
+  <div class="wrap">
+    <div class="shead reveal">
+      <span class="kicker">Nutzbarkeit & Schnellstart</span>
+      <h2>In 5 Schritten startklar</h2>
+      <p>Vom Auspacken zur ersten leuchtenden LED — inklusive der typischen Linux‑Hürden.</p>
+    </div>
+    <div class="grid g2">
+      <div>
+        <div class="steps reveal">
+          <div class="step"><div><h3>USB‑C „COM" einstecken</h3><p>Den Port nahe der <b>CH343</b>‑Brücke (Aufdruck „COM"). Er liefert Strom <i>und</i> Daten — ein Port genügt.</p></div></div>
+          <div class="step"><div><h3>Gerät finden</h3><p>Erscheint als <code>/dev/ttyACM0</code> (nicht <code>ttyUSB</code>! Der CH343 nutzt <code>cdc_acm</code>).</p></div></div>
+          <div class="step"><div><h3>Rechte setzen</h3><p>Einmalig <code>sudo usermod -aG dialout $USER</code> + neu anmelden. Sofort‑Fix: <code>sudo chmod a+rw /dev/ttyACM0</code>.</p></div></div>
+          <div class="step"><div><h3>MicroPython flashen</h3><p><b style="color:var(--accent)">Wichtig:</b> die <b>SPIRAM_OCT</b>‑Variante nehmen — nur sie aktiviert die 8 MB Octal‑PSRAM.</p></div></div>
+          <div class="step"><div><h3>Verbinden & loslegen</h3><p><code>mpremote connect /dev/ttyACM0</code> öffnet die REPL. Fertig.</p></div></div>
+        </div>
+      </div>
+      <div>
+        <div class="callout ok reveal"><div class="ic">🔋</div><div><b>Stromversorgung:</b> Beide USB‑C‑Buchsen liefern 5 V. Der „COM"‑Port allein reicht zum Versorgen <i>und</i> Flashen. Den nativen „USB"‑Port brauchst du nur für USB‑Geräteklassen, JTAG‑Debug oder maximalen USB‑Durchsatz.</div></div>
+        <div class="callout warn reveal"><div class="ic">⚡</div><div><b>Zwei USB‑Ports — der Unterschied:</b> „COM" (CH343) hat Auto‑Reset zum Flashen und funktioniert mit jedem Tool. Der native „USB" kommt direkt aus dem SoC (USB‑CDC/HID/JTAG) und ist schneller.</div></div>
+        <div class="codeblock reveal" style="margin-top:16px">
+          <button class="copy">Kopieren</button>
+          <pre><code><span class="cmt"># MicroPython (Octal!) flashen</span>
+esptool --chip esp32s3 -p /dev/ttyACM0 erase-flash
+esptool --chip esp32s3 -p /dev/ttyACM0 -b 921600 \
+  write-flash -z <span class="nm">0</span> ESP32_GENERIC_S3-SPIRAM_OCT-*.bin
+
+<span class="cmt"># REPL öffnen</span>
+mpremote connect /dev/ttyACM0</code></pre>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- COMPARE -->
+<section id="compare">
+  <div class="wrap">
+    <div class="shead reveal">
+      <span class="kicker">Besonderheiten im Vergleich</span>
+      <h2>Was dieses Board auszeichnet</h2>
+      <p>Gegenüber anderen Boards dieses Typs — und gegenüber dem klassischen ESP32.</p>
+    </div>
+    <div class="table-wrap reveal">
+      <table>
+        <thead><tr>
+          <th>Merkmal</th><th class="col-this">Dieses N16R8 (2× USB‑C)</th><th>DevKitC‑1 / N8R2</th><th>Klassischer ESP32</th>
+        </tr></thead>
+        <tbody>
+          <tr><td class="hl">PSRAM</td><td class="col-this"><b>8 MB Octal (OPI)</b></td><td>0–2 MB (oft Quad)</td><td>0–8 MB extern</td></tr>
+          <tr><td class="hl">Flash</td><td class="col-this">16 MB</td><td>4–8 MB</td><td>4 MB</td></tr>
+          <tr><td class="hl">USB‑Ports</td><td class="col-this"><b>2× USB‑C</b> (UART + nativ)</td><td>1× (Micro/USB‑C)</td><td>1× (über UART‑Brücke)</td></tr>
+          <tr><td class="hl">UART‑Brücke</td><td class="col-this">CH343 (modern, ttyACM)</td><td>CH340/CP2102 (ttyUSB)</td><td>CH340/CP2102</td></tr>
+          <tr><td class="hl">GPIO 33–37 frei?</td><td class="col-this"><span class="no">nein</span> (Octal‑PSRAM)</td><td><span class="yes">oft ja</span> (Quad)</td><td>—</td></tr>
+          <tr><td class="hl">Nativer USB (OTG/JTAG)</td><td class="col-this"><span class="yes">ja</span></td><td><span class="yes">ja</span></td><td><span class="no">nein</span></td></tr>
+          <tr><td class="hl">LP‑Core (ULP RISC‑V)</td><td class="col-this"><span class="yes">ja</span></td><td><span class="yes">ja</span></td><td>nur FSM‑ULP</td></tr>
+          <tr><td class="hl">Vektorbefehle (KI/DSP)</td><td class="col-this"><span class="yes">ja</span></td><td><span class="yes">ja</span></td><td><span class="no">nein</span></td></tr>
+          <tr><td class="hl">DAC</td><td class="col-this"><span class="no">nein</span></td><td><span class="no">nein</span></td><td><span class="yes">2× 8‑bit</span></td></tr>
+          <tr><td class="hl">Hall‑Sensor</td><td class="col-this"><span class="no">nein</span></td><td><span class="no">nein</span></td><td><span class="yes">ja</span></td></tr>
+          <tr><td class="hl">Bluetooth</td><td class="col-this">BLE 5 (kein Classic)</td><td>BLE 5</td><td>BLE 4.2 + Classic</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="callout warn reveal"><div class="ic">💡</div><div><b>Die wichtigste Eigenheit:</b> Echtes <b>Octal</b>‑PSRAM (8 MB) ist der große Vorteil dieses N16R8 — bringt aber zwei Konsequenzen: Du musst beim Bauen <b>OPI/SPIRAM_OCT</b> wählen, und <b>GPIO 33–37 sind dauerhaft belegt</b>. Viele „R8" am Markt tragen in Wahrheit Quad‑PSRAM — bei diesem Board ist es per Laufzeittest als Octal bestätigt.</div></div>
+    <div class="callout reveal"><div class="ic">🏭</div><div><b>Original oder Klon?</b> „N16R8" ist Espressifs <b>Modul</b>-Bezeichnung (N16 = 16 MB Flash, R8 = 8 MB Octal-PSRAM). Laut den offiziellen Datenblättern hat das echte <b>ESP32-S3-DevKitC-1</b> aber <b>Micro-USB</b> (nicht USB-C) und wird nur als <b>N8R8</b> oder <b>N32R16V</b> geführt — ein fertiges „DevKitC-1-N16R8" ist keine Standard-Variante. Dein Board ist also ein <b>Drittanbieter-Klon</b> (oft „YD-ESP32-S3") mit echtem Espressif-Silizium im Inneren — erkennbar an der <b>CH343</b>-Brücke (Original: <b>CP2102N</b>).</div></div>
+
+    <h3 class="subhead reveal" style="margin:32px 0 6px">Dein Board ↔ passendes Original (DevKitC-1 v1.0)</h3>
+    <p class="muted reveal" style="margin:0 0 16px;font-size:.95rem">Die RGB-LED auf <b>GPIO48</b> verrät die Referenz: die ältere <b>v1.0</b> (v1.1 nutzt GPIO38).</p>
+    <div class="table-wrap reveal">
+      <table>
+        <thead><tr><th>Merkmal</th><th>Original v1.0</th><th class="col-this">Dein Klon</th></tr></thead>
+        <tbody>
+          <tr><td class="hl">RGB-LED-Pin</td><td>GPIO48</td><td class="col-this"><span class="yes">GPIO48 — passt</span></td></tr>
+          <tr><td class="hl">USB-Buchsen</td><td>2× Micro-USB</td><td class="col-this">2× USB-C (moderner)</td></tr>
+          <tr><td class="hl">UART-Brücke</td><td>CP2102N (≤ 3 Mbaud)</td><td class="col-this">CH343 (≤ 6 Mbaud)</td></tr>
+          <tr><td class="hl">Speicher-SKU</td><td>N8R8 / N32R16V</td><td class="col-this">N16R8 (16 MB Flash)</td></tr>
+          <tr><td class="hl">ESD-Schutz (USB)</td><td>ja (TVS-Dioden)</td><td class="col-this">bei Klonen oft fehlend</td></tr>
+          <tr><td class="hl">Silizium / Modul</td><td>Espressif WROOM-1</td><td class="col-this"><span class="yes">echtes S3 + N16R8 ✓</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- FORENSIK / TIEFENPRÜFUNG -->
+<section id="forensik">
+  <div class="wrap">
+    <div class="shead reveal">
+      <span class="kicker">Tiefenprüfung & Forensik</span>
+      <h2>Ist das Board echt? — die Beweise</h2>
+      <p>Forensische Test-Serie (T1–T9). Geprüft wurde u. a., ob die 8 MB PSRAM und 16 MB Flash <b>wirklich</b> verbaut sind oder nur vorgetäuscht.</p>
+    </div>
+
+    <div class="callout ok reveal" style="margin-bottom:24px"><div class="ic">🛡️</div><div><b>Forensik-Urteil:</b> Echtes <b>Espressif-ESP32-S3-Silizium</b>, echte <b>8 MB Octal-PSRAM</b> (kein Fake), echte <b>16 MB Flash</b>. Layout = <b>DevKitC-1 v1.0-Klon</b> (LED GPIO48, VDD_SPI 3,3 V). Alle elektrischen Grundfunktionen einwandfrei.</div></div>
+
+    <div class="grid g3">
+      <div class="card reveal"><div class="ico">🔬</div><h3>Echtes Silizium</h3><p><b>MAC-OUI 44:1B:F6 = Espressif Inc.</b> Die werksseitig gebrannte MAC kann ein Klon nicht fälschen → der Chip ist genuine.</p></div>
+      <div class="card reveal"><div class="ico">🧠</div><h3>8 MB PSRAM echt</h3><p><b>Voll-Aliasing-Test: 0 Fehler</b> über 14.336 Stempel/7 MB. Eine vorgetäuschte (kleinere) PSRAM würde sich durch Spiegelung verraten — tut sie nicht.</p></div>
+      <div class="card reveal"><div class="ico">💾</div><h3>16 MB Flash echt</h3><p>JEDEC <span class="tag">0x68/0x4018</span> (Boya, 16 MB), Bootloader-Magic <span class="tag">0xE9</span> @0, distinkte Blöcke — Größe bestätigt.</p></div>
+      <div class="card reveal"><div class="ico">📌</div><h3>v1.0-Layout</h3><p><b>GPIO38 ist frei</b> → die RGB-LED liegt auf <b>GPIO48</b> (= DevKitC-1 v1.0), nicht GPIO38 (v1.1). Strapping GPIO45=0 → VDD_SPI 3,3 V.</p></div>
+      <div class="card reveal"><div class="ico">⏱️</div><h3>Takt sauber</h3><p>80→160→240 MHz skalieren <b>exakt linear</b> (×2,00 / ×3,00). 14 Touch-Kanäle mit Rausch-Spread 0.</p></div>
+      <div class="card reveal"><div class="ico">😴</div><h3>Sleep & RF</h3><p>Deep-Sleep (rst:0x5) + Light-Sleep bestätigt. WiFi TX 20 dBm @2,4 GHz; BLE 5 (1M/2M/Coded).</p></div>
+    </div>
+
+    <h3 class="subhead reveal" style="margin:34px 0 16px">📋 Alle Testergebnisse (T1–T9)</h3>
+    <div class="table-wrap reveal">
+      <table>
+        <thead><tr><th>Test</th><th>Prüfung</th><th>Ergebnis</th></tr></thead>
+        <tbody>
+          <tr><td class="hl">T1</td><td>Identität / MAC-OUI</td><td><span class="yes">Espressif-Silizium ✓</span></td></tr>
+          <tr><td class="hl">T2</td><td>PSRAM-Voll-Aliasing</td><td><span class="yes">0 Fehler / 7 MB — 8 MB echt ✓</span></td></tr>
+          <tr><td class="hl">T2</td><td>Flash-Größe</td><td><span class="yes">16 MB bestätigt ✓</span></td></tr>
+          <tr><td class="hl">T3</td><td>GPIO 22–25</td><td>existieren nicht (S3-konform)</td></tr>
+          <tr><td class="hl">T3</td><td>Pull-up/down (freie Pins)</td><td><span class="yes">alle korrekt ✓</span></td></tr>
+          <tr><td class="hl">T3</td><td>Strapping / VDD_SPI</td><td>GPIO45=0 → 3,3 V ✓</td></tr>
+          <tr><td class="hl">T4</td><td>ADC alle Kanäle</td><td>funktionsfähig ✓</td></tr>
+          <tr><td class="hl">T5</td><td>Touch 14 Kanäle</td><td><span class="yes">stabil, Spread 0 ✓</span></td></tr>
+          <tr><td class="hl">T6</td><td>Takt-Skalierung</td><td><span class="yes">linear ×2/×3 ✓</span></td></tr>
+          <tr><td class="hl">T7</td><td>Temp-Sensor</td><td>34 °C (bis 42 °C unter Last)</td></tr>
+          <tr><td class="hl">T8</td><td>Deep- & Light-Sleep</td><td><span class="yes">beide bestätigt ✓</span></td></tr>
+          <tr><td class="hl">T9</td><td>WiFi TX-Power</td><td>20 dBm (Spec ≤ +21 dBm) ✓</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- BENCHMARKS (Zusatz 1) -->
+<section id="bench">
+  <div class="wrap">
+    <div class="shead reveal">
+      <span class="kicker">Zusatz ① · Live‑Benchmarks</span>
+      <h2>MicroPython vs. ESP‑IDF vs. idf‑max — die Maximalwerte</h2>
+      <p>Direkter Vergleich dreier Firmwares: <b>MicroPython</b> (firmwarebegrenzt — GIL, stdout‑Spiegel, Default‑Takte), eigene <b>ESP‑IDF‑Firmware</b> (v6.0.1) und die <b>Maximal‑Firmware <span class="grad-tx">idf‑max</span></b> (jeder Kanal aufs HW‑Limit getunt). <b>Jede Kategorie zeigt alle drei Balken.</b> Bei <b>GPIO &amp; Flash</b> hat idf‑max die ESP‑IDF‑Werte zusätzlich gesteigert (Dedicated‑GPIO, QIO‑Flash); bei <b>Dual‑Core/SHA/PSRAM</b> liegt idf‑max gleichauf mit ESP‑IDF (gleicher C/IDF‑Stack). Alles real auf diesem Exemplar gemessen; jeder Balken relativ zum Zeilen‑Maximum.</p>
+    </div>
+    <div class="card reveal">
+      <div class="subhead" style="margin-bottom:8px">⚡ Performance &amp; Durchsatz</div>
+      <div style="display:flex;gap:18px;flex-wrap:wrap;margin-bottom:20px;font-size:.82rem;color:var(--tx2)">
+        <span style="display:inline-flex;align-items:center;gap:6px"><span style="width:22px;height:9px;border-radius:6px;background:linear-gradient(90deg,#4a5570,#97a2bd)"></span>MicroPython 1.28</span>
+        <span style="display:inline-flex;align-items:center;gap:6px"><span style="width:22px;height:9px;border-radius:6px;background:var(--grad)"></span>ESP‑IDF v6.0.1</span>
+        <span style="display:inline-flex;align-items:center;gap:6px"><span style="width:22px;height:9px;border-radius:6px;background:linear-gradient(90deg,#1f9e8f,#36d6c3)"></span>idf‑max (Maximal‑Firmware)</span>
+      </div>
+
+      <div class="cmp">
+        <div class="cmp-head"><b>Nativer USB ↑ (ESP→Host)</b><span class="cmp-gain win-max">ESP‑IDF &amp; idf‑max am USB‑FS‑Limit</span></div>
+        <div class="cmp-row"><span class="cmp-tag">MicroPython</span><div class="cmp-track"><div class="fill mp" data-w="2"></div></div><span class="cmp-val">0,09 Mbit/s</span></div>
+        <div class="cmp-row"><span class="cmp-tag">ESP‑IDF</span><div class="cmp-track"><div class="fill idf" data-w="98"></div></div><span class="cmp-val">6,15 Mbit/s</span></div>
+        <div class="cmp-row"><span class="cmp-tag">idf‑max</span><div class="cmp-track"><div class="fill max" data-w="100"></div></div><span class="cmp-val hl">6,29 Mbit/s</span></div>
+      </div>
+      <div class="cmp">
+        <div class="cmp-head"><b>Nativer USB ↓ (Host→ESP)</b><span class="cmp-gain win-max">idf‑max ~4,5 · USB‑FS‑Limit</span></div>
+        <div class="cmp-row"><span class="cmp-tag">MicroPython</span><div class="cmp-track"><div class="fill mp" data-w="41"></div></div><span class="cmp-val">1,85 Mbit/s</span></div>
+        <div class="cmp-row"><span class="cmp-tag">ESP‑IDF</span><div class="cmp-track"><div class="fill idf" data-w="89"></div></div><span class="cmp-val">3,98 Mbit/s</span></div>
+        <div class="cmp-row"><span class="cmp-tag">idf‑max</span><div class="cmp-track"><div class="fill max" data-w="100"></div></div><span class="cmp-val hl">4,46 Mbit/s</span></div>
+      </div>
+      <div class="cmp">
+        <div class="cmp-head"><b>GPIO‑Toggle (max. Frequenz)</b><span class="cmp-gain win-max">idf‑max: Dedicated GPIO ~5×</span></div>
+        <div class="cmp-row"><span class="cmp-tag">MicroPython</span><div class="cmp-track"><div class="fill mp" data-w="1"></div></div><span class="cmp-val">0,26 MHz</span></div>
+        <div class="cmp-row"><span class="cmp-tag">ESP‑IDF</span><div class="cmp-track"><div class="fill idf" data-w="20"></div></div><span class="cmp-val">7,94 MHz</span></div>
+        <div class="cmp-row"><span class="cmp-tag">idf‑max</span><div class="cmp-track"><div class="fill max" data-w="100"></div></div><span class="cmp-val hl">39,7 MHz</span></div>
+      </div>
+      <div class="cmp">
+        <div class="cmp-head"><b>Flash lesen</b><span class="cmp-gain win-max">idf‑max: QIO‑Flash +31 %</span></div>
+        <div class="cmp-row"><span class="cmp-tag">MicroPython</span><div class="cmp-track"><div class="fill mp" data-w="7"></div></div><span class="cmp-val">0,83 MB/s</span></div>
+        <div class="cmp-row"><span class="cmp-tag">ESP‑IDF</span><div class="cmp-track"><div class="fill idf" data-w="76"></div></div><span class="cmp-val">8,7 MB/s</span></div>
+        <div class="cmp-row"><span class="cmp-tag">idf‑max</span><div class="cmp-track"><div class="fill max" data-w="100"></div></div><span class="cmp-val hl">11,4 MB/s</span></div>
+      </div>
+      <div class="cmp">
+        <div class="cmp-head"><b>Dual‑Core‑Speedup</b><span class="cmp-gain">idf‑max = ESP‑IDF · echte 2 Kerne</span></div>
+        <div class="cmp-row"><span class="cmp-tag">MicroPython</span><div class="cmp-track"><div class="fill mp" data-w="50"></div></div><span class="cmp-val">×0,99 (GIL)</span></div>
+        <div class="cmp-row"><span class="cmp-tag">ESP‑IDF</span><div class="cmp-track"><div class="fill idf" data-w="100"></div></div><span class="cmp-val hl">×2,00</span></div>
+        <div class="cmp-row"><span class="cmp-tag">idf‑max</span><div class="cmp-track"><div class="fill max" data-w="100"></div></div><span class="cmp-val">×2,00</span></div>
+      </div>
+      <div class="cmp">
+        <div class="cmp-head"><b>HW‑Crypto SHA256</b><span class="cmp-gain">idf‑max ≈ ESP‑IDF · HW‑fix</span></div>
+        <div class="cmp-row"><span class="cmp-tag">MicroPython</span><div class="cmp-track"><div class="fill mp" data-w="34"></div></div><span class="cmp-val">32,3 MB/s</span></div>
+        <div class="cmp-row"><span class="cmp-tag">ESP‑IDF</span><div class="cmp-track"><div class="fill idf" data-w="100"></div></div><span class="cmp-val hl">96,3 MB/s</span></div>
+        <div class="cmp-row"><span class="cmp-tag">idf‑max</span><div class="cmp-track"><div class="fill max" data-w="99"></div></div><span class="cmp-val">95,0 MB/s</span></div>
+      </div>
+      <div class="cmp">
+        <div class="cmp-head"><b>WLAN‑Durchsatz ↓ (Download)</b><span class="cmp-gain win-max">idf‑max UDP: +123 %</span></div>
+        <div class="cmp-row"><span class="cmp-tag">MicroPython</span><div class="cmp-track"><div class="fill mp" data-w="21"></div></div><span class="cmp-val">11,7 Mbit/s</span></div>
+        <div class="cmp-row"><span class="cmp-tag">ESP‑IDF TCP</span><div class="cmp-track"><div class="fill idf" data-w="45"></div></div><span class="cmp-val">24,5 Mbit/s</span></div>
+        <div class="cmp-row"><span class="cmp-tag">idf‑max UDP</span><div class="cmp-track"><div class="fill max" data-w="100"></div></div><span class="cmp-val hl">54,7 Mbit/s</span></div>
+      </div>
+      <div class="cmp">
+        <div class="cmp-head"><b>WLAN‑Durchsatz ↑ (Upload)</b><span class="cmp-gain win-max">idf‑max UDP: +255 %</span></div>
+        <div class="cmp-row"><span class="cmp-tag">MicroPython</span><div class="cmp-track"><div class="fill mp" data-w="17"></div></div><span class="cmp-val">8,7 Mbit/s</span></div>
+        <div class="cmp-row"><span class="cmp-tag">ESP‑IDF TCP</span><div class="cmp-track"><div class="fill idf" data-w="28"></div></div><span class="cmp-val">14,5 Mbit/s</span></div>
+        <div class="cmp-row"><span class="cmp-tag">idf‑max UDP</span><div class="cmp-track"><div class="fill max" data-w="100"></div></div><span class="cmp-val hl">51,5 Mbit/s</span></div>
+      </div>
+      <div class="cmp">
+        <div class="cmp-head"><b>PSRAM memcpy (Octal)</b><span class="cmp-gain">idf‑max = ESP‑IDF · 21 MB/s</span></div>
+        <div class="cmp-row"><span class="cmp-tag">MicroPython</span><div class="cmp-track"><div class="fill mp" data-w="62"></div></div><span class="cmp-val">13 MB/s</span></div>
+        <div class="cmp-row"><span class="cmp-tag">ESP‑IDF</span><div class="cmp-track"><div class="fill idf" data-w="100"></div></div><span class="cmp-val hl">21 MB/s</span></div>
+        <div class="cmp-row"><span class="cmp-tag">idf‑max</span><div class="cmp-track"><div class="fill max" data-w="100"></div></div><span class="cmp-val">21 MB/s</span></div>
+      </div>
+      <div class="cmp">
+        <div class="cmp-head"><b>BLE ↑ Notify (ESP→PC)</b><span class="cmp-gain win-mp">MicroPython vorn · idf‑max +53 % vs ESP‑IDF</span></div>
+        <div class="cmp-row"><span class="cmp-tag">MicroPython</span><div class="cmp-track"><div class="fill mp" data-w="100"></div></div><span class="cmp-val hl">1,16 Mbit/s</span></div>
+        <div class="cmp-row"><span class="cmp-tag">ESP‑IDF</span><div class="cmp-track"><div class="fill idf" data-w="46"></div></div><span class="cmp-val">0,53 Mbit/s</span></div>
+        <div class="cmp-row"><span class="cmp-tag">idf‑max</span><div class="cmp-track"><div class="fill max" data-w="70"></div></div><span class="cmp-val">0,81 Mbit/s</span></div>
+      </div>
+      <div class="cmp">
+        <div class="cmp-head"><b>BLE ↓ Write (PC→ESP)</b><span class="cmp-gain win-mp">MicroPython vorn · central‑gedeckelt</span></div>
+        <div class="cmp-row"><span class="cmp-tag">MicroPython</span><div class="cmp-track"><div class="fill mp" data-w="100"></div></div><span class="cmp-val hl">1,02 Mbit/s</span></div>
+        <div class="cmp-row"><span class="cmp-tag">ESP‑IDF</span><div class="cmp-track"><div class="fill idf" data-w="80"></div></div><span class="cmp-val">0,82 Mbit/s</span></div>
+        <div class="cmp-row"><span class="cmp-tag">idf‑max</span><div class="cmp-track"><div class="fill max" data-w="59"></div></div><span class="cmp-val">0,60 Mbit/s</span></div>
+      </div>
+    </div>
+
+    <div class="callout ok reveal" style="margin-top:18px"><div class="ic">🧩</div><div><b>Die zentrale Erkenntnis:</b> Bei <b>USB, GPIO, Flash, WLAN, Crypto, Dual‑Core</b> war die <b>Firmware</b> der Flaschenhals — mit eigener <b>ESP‑IDF‑/C‑Firmware</b> explodieren die Werte (nativer USB <b>~65×</b>, GPIO <b>~30×</b>, Flash <b>~10×</b>; echte 2‑Kern‑Parallelität statt GIL). <b>Die Hardware war nie das Limit.</b> Einzige Ausnahme: <b>BLE</b> — hier liegt <b>MicroPython vorn</b>, weil dessen Stack <b>~4–5 Notifications pro Connection‑Event</b> packt, unsere NimBLE‑Firmware nur 1. Erschöpfend geprüft (MTU 200–512, PHY 1M <i>und</i> 2M, BlueZ = Smartphone): rein <b>stack‑/firmware‑bedingt</b> — nicht Tool‑, PC‑ oder PHY‑limitiert.</div></div>
+    <div class="callout reveal"><div class="ic">📐</div><div><b>Datenblatt‑Soll vs. real</b> (identischer Chip wie im Original): WLAN bis <b>150 Mbps</b> PHY, BLE 5 bis <b>2 Mbps</b> PHY, nativer USB <b>Full‑Speed 12 Mbit/s</b>. PHY‑Maxima sind reine Funk‑Symbolraten — kein nutzbarer Datendurchsatz. Alle Werte real gemessen (MicroPython 1.28 · ESP‑IDF v6.0.1).</div></div>
+
+    <div class="card reveal" style="margin-top:18px">
+      <div class="subhead" style="margin-bottom:16px">🔬 So wurde gemessen — der Messprozess</div>
+      <div class="grid g2">
+        <div>
+          <h3 style="font-size:1.02rem;margin-bottom:6px">🐍 MicroPython 1.28</h3>
+          <p style="color:var(--tx2);font-size:.92rem">Interaktiv über die REPL (<span class="tag">mpremote</span>): On‑Device‑Tests (PSRAM‑Stress, Touch, ADC, Temp‑Sensor) sowie WLAN‑, USB‑ und BLE‑Durchsatz. BLE‑Gegenstelle: BlueZ via <span class="tag">bleak</span> + Smartphone.</p>
+        </div>
+        <div>
+          <h3 style="font-size:1.02rem;margin-bottom:6px">🏗️ ESP‑IDF v6.0.1 (eigene C‑Firmware)</h3>
+          <p style="color:var(--tx2);font-size:.92rem"><b>On‑Device</b>‑Benchmarks beim Boot (UART). <b>WLAN</b> = ESP als Accesspoint + TCP‑Server, PC direkt verbunden. <b>USB</b> = USB‑Serial‑JTAG (nativer Port). <b>BLE</b> = NimBLE‑Notify, gegengeprüft mit BlueZ <i>und</i> nRF Connect.</p>
+        </div>
+      </div>
+      <div class="callout reveal" style="margin-top:8px"><div class="ic">🎯</div><div><b>Messprinzip:</b> immer <b>Single‑Hop</b> (kein Router/Hub dazwischen) und <b>Host‑ wie Geräteseite gleichzeitig</b> erfasst — beide mussten übereinstimmen, sonst ungültig. Je 32–64 MB pro Durchsatztest. Firmware/Skripte: <span class="tag">idf‑throughput/</span> · <span class="tag">idf‑ble/</span> · <span class="tag">Tiefenpruefung/</span>.</div></div>
+    </div>
+
+    <div class="card reveal" style="margin-top:18px">
+      <div class="subhead" style="margin-bottom:6px">🚀 Maximal‑Firmware <span class="tag">idf‑max</span> — das letzte Limit ausgereizt</div>
+      <p style="color:var(--tx2);font-size:.94rem;margin-bottom:16px">Eine eigene ESP‑IDF‑Firmware (C, v6.0.1) mit drei aufs Hardware‑Limit getunten, per UART0 umschaltbaren Modi (USB / WiFi / BLE). Sie beantwortet die Frage: <b>Wo war wirklich die Firmware der Flaschenhals — und wo ist die echte Hardware‑Wand?</b> Die Messwerte stehen oben als dritter (türkiser) Balken in der Vergleichsgrafik.</p>
+
+      <div class="grid g3" style="margin-top:18px">
+        <div class="card reveal"><div class="ico">📡</div><h3>WiFi — großer Sprung</h3><p>Der Engpass war <b>TCP‑Overhead</b>, nicht die HW. <b>UDP</b> + AMPDU + <code>PS_NONE</code> + große Puffer → <b>~50 Mbit/s</b> (host‑bestätigt, 0 % Verlust). Nahe am 1×1‑802.11n‑HT20‑Praxislimit.</p></div>
+        <div class="card reveal"><div class="ico">🔌</div><h3>USB — Silizium‑Wand</h3><p>Selbst der theoretisch schnellste Pfad — <b>TinyUSB‑Vendor‑Bulk per libusb, ohne tty</b> — landet bei <b>~6,3 Mbit/s</b>, identisch zum USB‑Serial‑JTAG. <b>USB 2.0 Full‑Speed ist die echte Grenze</b>, kein Firmware‑Limit.</p></div>
+        <div class="card reveal"><div class="ico">📶</div><h3>BLE — central‑gedeckelt</h3><p>Notify‑<b>Pipeline</b> (15 in flight, 2M‑PHY, DLE) hebt ESP‑IDF von 0,53 auf <b>0,81 Mbit/s (+53 %)</b>. Mehr lässt der <b>PC‑Central (BlueZ)</b> nicht zu — er bestimmt die Event‑Länge.</p></div>
+      </div>
+
+      <div class="callout ok reveal" style="margin-top:16px"><div class="ic">🧭</div><div><b>Fazit der Maximal‑Firmware:</b> „Firmware, nicht Hardware" stimmt <b>dort, wo Software‑Schichten im Weg standen</b> (WLAN‑TCP, MicroPython‑GIL/UART‑Spiegel) — hier holt C/ESP‑IDF ein Vielfaches heraus. Bei <b>USB &amp; BLE</b> stößt man dagegen an <b>echte, unverrückbare Grenzen</b> (USB‑FS‑Peripheral bzw. der externe BLE‑Central), die keine Firmware überwindet. Projekt &amp; Reproduktion: <span class="tag">idf‑max/</span>.</div></div>
+      <div class="callout ok reveal" style="margin-top:12px"><div class="ic">✅</div><div><b>Vor dem Bereitstellen verifiziert:</b> Ein eingebauter Compute‑Selftest (Modus <code>c</code>) prüft auf dem Board CPU, RAM, Flash, GPIO, HW‑SHA256 und PSRAM — <b>Ergebnis PASS</b> (Dual‑Core ×2,00 · SRAM 726 MB/s · PSRAM 21 MB/s · SHA256 95 MB/s · 8 MB PSRAM erkannt). <b>Zwei Werte zusätzlich optimiert:</b> GPIO‑Toggle <b>7,94 → 39,7 MHz</b> (Dedicated‑GPIO‑Instruktion statt APB‑Register) und Flash‑Lesen <b>8,7 → 11,4 MB/s</b> (QIO statt DIO). 120‑MHz‑PSRAM/Flash getestet, aber als nicht deploy‑sicher verworfen (modellabhängiger Flash‑HPM). Auch alle drei Funk-/USB‑Modi booten sauber. <b>Zusätzlich ein Langzeit-Burn-In</b> (Modus <code>s</code>): beide Kerne <b>gemessen 100 % ausgelastet</b> + fortlaufende Selbst‑Verifikation von PSRAM, SRAM, Flash‑CRC, SHA und Heap — über die Laufzeit <b>0 Fehler, 0 unerwartete Resets, kein Heap‑Leak</b> (Temp stabil ~40 °C).</div></div>
+    </div>
+
+    <div class="card reveal" style="margin-top:18px;border-color:color-mix(in srgb,#36d6c3 38%,var(--line))">
+      <div class="subhead" style="margin-bottom:6px">⬇ idf‑max herunterladen &amp; selbst flashen</div>
+      <p style="color:var(--tx2);font-size:.94rem;margin-bottom:14px">Das fertige Flash‑Image (~1 MB) enthält <b>Bootloader + Partitionstabelle + App</b> in einer Datei — herunterladen und mit <b>esptool</b> auf dein ESP32‑S3‑Board schreiben.</p>
+      <div style="display:flex;gap:14px;flex-wrap:wrap;align-items:center">
+        <a class="btn btn-primary" href="firmware/idf-max-merged.bin" download>⬇ idf‑max‑merged.bin herunterladen (1 MB)</a>
+      </div>
+      <div class="callout reveal" style="margin-top:14px"><div class="ic">⚡</div><div><b>Flashen (ein Befehl):</b> <code>esptool --chip esp32s3 -b 921600 write-flash 0x0 idf-max-merged.bin</code><br>Das <b>überschreibt die vorhandene Firmware</b> (z. B. MicroPython). Danach den Modus per UART0 (115200 Baud) wählen: <code>u</code> (USB) · <code>w</code> (WiFi) · <code>b</code> (BLE) · <code>c</code> (Compute-Selftest) · <code>s</code> (Soak/Burn-In). Quelltext &amp; Build: <span class="tag">idf‑max/</span>.</div></div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- RECIPES (Zusatz 2) -->
+<section id="recipes">
+  <div class="wrap">
+    <div class="shead reveal">
+      <span class="kicker">Zusatz ② · Code‑Rezepte</span>
+      <h2>Kopierfertige Snippets</h2>
+      <p>Getestete MicroPython‑Bausteine für die häufigsten Aufgaben.</p>
+    </div>
+    <div class="tabs reveal" id="tabs"></div>
+    <div id="panes"></div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- TOOLS & METHODEN -->
+<section id="tools">
+  <div class="wrap">
+    <div class="shead reveal">
+      <span class="kicker">Werkzeuge & Methoden</span>
+      <h2>Womit getestet wurde — Schritt für Schritt</h2>
+      <p>Jedes Tool aus dieser Analyse mit Installations­anleitung und Praxis­hinweisen — plus die Vorgehens­weisen dahinter, bewusst auch für <b>Einsteiger</b> erklärt.</p>
+    </div>
+
+    <div class="callout ok reveal" style="margin-bottom:26px"><div class="ic">🧭</div><div><b>Für Neulinge zuerst:</b> Du steckst das Board per USB‑C an, ein Tool auf dem PC „redet" über die serielle Schnittstelle (<span class="tag">/dev/ttyACM0</span>) mit dem Chip. Damit kannst du <b>Firmware aufspielen</b> (flashen) und <b>Programme ausführen</b>. Unten findest du genau die Tools, die das ermöglichen.</div></div>
+
+    <h3 class="subhead reveal" style="margin-bottom:18px">🧰 Die Werkzeuge</h3>
+    <div class="grid g2">
+
+      <div class="card toolcard reveal">
+        <div class="ico">⚡</div>
+        <h3>esptool &amp; espefuse</h3>
+        <p>Espressifs Kommandozeilen‑Tool zum <b>Flashen</b>, Auslesen von Chip‑Infos/eFuses und für das <b>Flash‑Backup</b>. Damit haben wir Chip identifiziert, das 16‑MB‑Backup gezogen und MicroPython aufgespielt.</p>
+        <div class="codeblock"><button class="copy">Kopieren</button><pre><code><span class="cmt"># empfohlen (isolierte Installation):</span>
+pipx install esptool
+<span class="cmt"># Alternative:</span>
+python3 -m pip install --user esptool</code></pre></div>
+        <div class="callout warn"><div class="ic">⚠️</div><div><b>Achten:</b> Immer <code>--chip esp32s3</code> setzen. Port ist <code>/dev/ttyACM0</code> (nicht ttyUSB!). Vor dem Überschreiben <b>immer ein Backup</b> ziehen.</div></div>
+      </div>
+
+      <div class="card toolcard reveal">
+        <div class="ico">🐍</div>
+        <h3>MicroPython (Firmware)</h3>
+        <p>Eine Python‑Laufzeit, die <b>auf dem Chip selbst</b> läuft — perfekt zum interaktiven Ausprobieren ohne Kompilieren. Damit haben wir PSRAM, WLAN, BLE, Touch, ADC, Deep‑Sleep getestet.</p>
+        <div class="codeblock"><button class="copy">Kopieren</button><pre><code><span class="cmt"># 1) Variante mit Octal-PSRAM von micropython.org laden:</span>
+<span class="cmt">#    ESP32_GENERIC_S3-SPIRAM_OCT-*.bin</span>
+<span class="cmt"># 2) flashen:</span>
+esptool --chip esp32s3 -p /dev/ttyACM0 erase-flash
+esptool --chip esp32s3 -p /dev/ttyACM0 -b 921600 \
+  write-flash -z <span class="nm">0</span> ESP32_GENERIC_S3-SPIRAM_OCT-*.bin</code></pre></div>
+        <div class="callout warn"><div class="ic">⚠️</div><div><b>Achten:</b> Unbedingt die <b>SPIRAM_OCT</b>‑Variante — nur sie aktiviert die 8 MB Octal‑PSRAM. Die Standard‑Variante zeigt sonst nur ~300 KB RAM.</div></div>
+      </div>
+
+      <div class="card toolcard reveal">
+        <div class="ico">💬</div>
+        <h3>mpremote</h3>
+        <p>Das offizielle Begleit‑Tool für MicroPython: öffnet die interaktive Konsole (<b>REPL</b>), führt Skripte aus und kopiert Dateien aufs Board. Unser Haupt‑Werkzeug für die Live‑Tests.</p>
+        <div class="codeblock"><button class="copy">Kopieren</button><pre><code>python3 -m pip install --user mpremote
+
+<span class="cmt"># Konsole öffnen:</span>
+mpremote connect /dev/ttyACM0
+<span class="cmt"># Skript ausführen:</span>
+mpremote connect /dev/ttyACM0 run mein_test.py</code></pre></div>
+        <div class="callout warn"><div class="ic">⚠️</div><div><b>Achten:</b> Beim Verbinden macht mpremote einen <b>Soft‑Reset</b> — das überschreibt z. B. die Deep‑Sleep‑Aufweck‑Ursache. Für solche Fälle pyserial nutzen.</div></div>
+      </div>
+
+      <div class="card toolcard reveal">
+        <div class="ico">🔌</div>
+        <h3>pyserial</h3>
+        <p>Python‑Bibliothek für <b>direkten</b> seriellen Zugriff — ohne Zwischenschicht. Damit haben wir Boot‑Logs gelesen, Resets ausgelöst und rohe Durchsatz‑Messungen gemacht.</p>
+        <div class="codeblock"><button class="copy">Kopieren</button><pre><code>python3 -m pip install --user pyserial
+
+<span class="cmt"># Reset auslösen (RTS) + roh lesen – Beispiel:</span>
+<span class="kw">import</span> serial, time
+s = serial.<span class="fn">Serial</span>(<span class="st">'/dev/ttyACM0'</span>, <span class="nm">115200</span>)
+s.rts = <span class="kw">True</span>; time.<span class="fn">sleep</span>(<span class="nm">.1</span>); s.rts = <span class="kw">False</span></code></pre></div>
+        <div class="callout warn"><div class="ic">⚠️</div><div><b>Achten:</b> Über <code>DTR/RTS</code> steuert man Reset/Boot des ESP. Baudrate (115200) muss zur Firmware passen — beim nativen USB ist sie egal.</div></div>
+      </div>
+
+      <div class="card toolcard reveal">
+        <div class="ico">🏗️</div>
+        <h3>ESP‑IDF (C‑Toolchain)</h3>
+        <p>Das professionelle Entwicklungs‑Framework von Espressif (in C). Nötig, um die <b>volle Hardware</b> auszureizen — bei uns: echter Dual‑Core‑Speedup und der native‑USB‑Maximaldurchsatz.</p>
+        <div class="codeblock"><button class="copy">Kopieren</button><pre><code>mkdir -p ~/esp &amp;&amp; cd ~/esp
+git clone -b release/v5.3 --depth <span class="nm">1</span> \
+  --recurse-submodules --shallow-submodules \
+  https://github.com/espressif/esp-idf.git
+cd esp-idf &amp;&amp; ./install.sh esp32s3
+. ./export.sh        <span class="cmt"># in JEDER neuen Shell nötig</span></code></pre></div>
+        <div class="callout warn"><div class="ic">⚠️</div><div><b>Achten:</b> Mehrere GB Download. <code>. ./export.sh</code> in jeder Shell neu sourcen. Pro Projekt einmal <code>idf.py set-target esp32s3</code>, dann <code>idf.py build flash</code>.</div></div>
+      </div>
+
+      <div class="card toolcard reveal">
+        <div class="ico">📶</div>
+        <h3>bleak</h3>
+        <p>Plattformübergreifende Python‑Bibliothek, um den PC als <b>Bluetooth‑LE‑Central</b> zu nutzen. Damit hat sich der Rechner direkt mit dem ESP verbunden und den BLE‑Durchsatz gemessen.</p>
+        <div class="codeblock"><button class="copy">Kopieren</button><pre><code><span class="cmt"># wegen PEP-668 in eine virtuelle Umgebung:</span>
+python3 -m venv ~/bleenv
+~/bleenv/bin/pip install bleak
+~/bleenv/bin/python mein_ble_test.py</code></pre></div>
+        <div class="callout warn"><div class="ic">⚠️</div><div><b>Achten:</b> Moderne Linux‑Distros blocken <code>pip install</code> systemweit (PEP‑668) → <b>venv</b> oder <code>pipx</code> nutzen. Bluetooth‑Dienst (<code>bluetoothd</code>) muss laufen.</div></div>
+      </div>
+
+      <div class="card toolcard reveal">
+        <div class="ico">🌐</div>
+        <h3>NetworkManager / nmcli</h3>
+        <p>Linux‑Werkzeug zur WLAN‑Steuerung. Damit haben wir für die <b>saubere Single‑Hop‑WLAN‑Messung</b> den PC mit dem ESP‑Accesspoint verbunden bzw. einen PC‑Hotspot aufgespannt.</p>
+        <div class="codeblock"><button class="copy">Kopieren</button><pre><code><span class="cmt"># meist vorinstalliert. Mit ESP-AP verbinden:</span>
+nmcli device wifi connect <span class="st">"ESP32-Speedtest"</span> password <span class="st">"…"</span>
+<span class="cmt"># PC selbst zum Hotspot machen:</span>
+nmcli device wifi hotspot ssid <span class="st">"PC-Hotspot"</span> password <span class="st">"…"</span></code></pre></div>
+        <div class="callout warn"><div class="ic">⚠️</div><div><b>Achten:</b> Beim Wechsel aufs ESP‑WLAN verliert der PC sein altes WLAN (Ethernet bleibt). Danach mit <code>nmcli connection up &lt;Name&gt;</code> zurückschalten.</div></div>
+      </div>
+
+      <div class="card toolcard reveal">
+        <div class="ico">🐧</div>
+        <h3>Linux‑Basics (USB &amp; Seriell)</h3>
+        <p>Bordmittel, um das Board zu erkennen und Zugriff zu bekommen: <code>lsusb</code>, <code>udevadm</code>, <code>dmesg</code> sowie die Gruppen‑Rechte.</p>
+        <div class="codeblock"><button class="copy">Kopieren</button><pre><code><span class="cmt"># Board sehen (VID:PID):</span>
+lsusb | grep -iE <span class="st">"303a|1a86"</span>
+<span class="cmt"># Dauerhaft Zugriff (einmalig, dann neu anmelden):</span>
+sudo usermod -aG dialout $USER
+<span class="cmt"># Sofort-Fix für die aktuelle Sitzung:</span>
+sudo chmod a+rw /dev/ttyACM0</code></pre></div>
+        <div class="callout warn"><div class="ic">⚠️</div><div><b>Achten:</b> Der CH343 nutzt den <code>cdc_acm</code>‑Treiber → Gerät heißt <b>ttyACM</b>, nicht ttyUSB. Nach jedem Neu‑Einstecken/Modus‑Wechsel kann das <code>chmod</code> erneut nötig sein.</div></div>
+      </div>
+
+    </div>
+
+    <h3 class="subhead reveal" style="margin:44px 0 8px">🔬 Die Vorgehensweisen (Methoden)</h3>
+    <p class="muted reveal" style="margin-bottom:22px;max-width:680px">Gute Messungen brauchen die richtige Methode. Diese Prinzipien haben unsere Ergebnisse belastbar gemacht — jeweils kurz erklärt, <i>warum</i> man so vorgeht.</p>
+    <div class="grid g3">
+      <div class="card reveal"><div class="ico">💾</div><h3>Erst sichern, dann ändern</h3><p>Vor dem ersten Flashen den kompletten 16‑MB‑Flash als Backup ziehen. <b>Warum:</b> So ist der Auslieferungs­zustand jederzeit wiederherstellbar — risikofrei experimentieren.</p></div>
+      <div class="card reveal"><div class="ico">🔀</div><h3>Octal vs. Quad: beide Builds testen</h3><p>Datenblatt‑Codes können täuschen. Wir haben beide MicroPython‑Varianten geflasht und am Heap gesehen, welche PSRAM wirklich verbaut ist. <b>Warum:</b> Messen schlägt Raten.</p></div>
+      <div class="card reveal"><div class="ico">⚖️</div><h3>Beidseitig messen</h3><p>Durchsatz immer auf <b>Host‑ und Geräteseite</b> gleichzeitig erfassen. <b>Warum:</b> Stimmen beide Werte überein, ist das Ergebnis verlässlich und kein Mess‑Artefakt.</p></div>
+      <div class="card reveal"><div class="ico">🔁</div><h3>Interner UART‑Loopback</h3><p>TX und RX einer freien UART auf <b>denselben Pin</b> legen → Daten ohne Kabel zurücklesen. <b>Warum:</b> So findet man die max. Baudrate des Chips ganz ohne Zusatz­hardware.</p></div>
+      <div class="card reveal"><div class="ico">📡</div><h3>Single‑Hop‑WLAN</h3><p>Für echten WLAN‑Durchsatz den ESP als <b>eigenen Accesspoint</b> betreiben und den PC direkt verbinden. <b>Warum:</b> Kein Router/Hotspot dazwischen, der das Ergebnis verfälscht (Doppel‑Hop halbiert!).</p></div>
+      <div class="card reveal"><div class="ico">📜</div><h3>Reset‑Ursache aus dem Boot‑Log</h3><p>Beim Aufwachen aus Deep‑Sleep druckt das ROM <code>rst:0x5 (DSLEEP)</code> auf die UART — roh mit pyserial mitlesen. <b>Warum:</b> mpremotes Soft‑Reset würde die Ursache sonst überschreiben.</p></div>
+      <div class="card reveal"><div class="ico">📦</div><h3>Python sauber isolieren</h3><p>Pakete in <b>venv</b> oder via <b>pipx</b> installieren, nicht systemweit. <b>Warum:</b> Moderne Distros blocken das (PEP‑668) und es hält das System‑Python sauber.</p></div>
+      <div class="card reveal"><div class="ico">🔧</div><h3>Bootloader‑Modus für nativen USB</h3><p>Im Bootloader meldet sich der native USB als <b>USB‑Serial‑JTAG</b> (<code>303a:1001</code>) — esptool kann dann darüber reden. <b>Warum:</b> Zugriff auf den nativen Port ohne eigene Firmware.</p></div>
+      <div class="card reveal"><div class="ico">🎯</div><h3>Das richtige Tool je Ziel</h3><p>MicroPython zum schnellen Erkunden, <b>ESP‑IDF</b> wenn die Hardware ans Limit soll (Dual‑Core, USB‑Speed). <b>Warum:</b> Viele „Limits" sind firmware‑, nicht hardware­bedingt.</p></div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- TROUBLE (Zusatz 3) -->
+<section id="trouble">
+  <div class="wrap">
+    <div class="shead reveal">
+      <span class="kicker">Zusatz ③ · Troubleshooting</span>
+      <h2>Stolperfallen & Lösungen</h2>
+      <p>Die Fehler, die fast jeder mit diesem Board einmal macht — und wie du sie sofort behebst.</p>
+    </div>
+    <div class="grid g2">
+      <div class="card reveal"><div class="ico">🧱</div><h3>Nur ~300 KB RAM statt 8 MB</h3><p>Du hast die <b>Nicht‑Octal</b>‑Firmware geflasht. Lösung: die <b>SPIRAM_OCT</b>‑Variante nehmen — nur sie spricht die Octal‑PSRAM an.</p></div>
+      <div class="card reveal"><div class="ico">🔍</div><h3>Kein /dev/ttyUSB0</h3><p>Richtig — der CH343 meldet sich als <b>/dev/ttyACM0</b> über <code>cdc_acm</code>. Such nach <code>ttyACM*</code>, nicht <code>ttyUSB*</code>.</p></div>
+      <div class="card reveal"><div class="ico">🚫</div><h3>„Permission denied"</h3><p>Dein User ist nicht in <b>dialout</b>. <code>sudo usermod -aG dialout $USER</code> + neu anmelden, oder schnell <code>sudo chmod a+rw /dev/ttyACM0</code>.</p></div>
+      <div class="card reveal"><div class="ico">💥</div><h3>Absturz bei GPIO 33–37</h3><p>Diese Pins gehören der <b>Octal‑PSRAM</b>. Jede Nutzung crasht den Cache. Nimm stattdessen 1–18, 21, 38–42, 47.</p></div>
+      <div class="card reveal"><div class="ico">🔁</div><h3>Welcher der zwei Ports?</h3><p>Zum Flashen den <b>„COM"</b>‑Port (CH343, Auto‑Reset). Erscheint als <code>303a:1001/4001</code> → das ist der <b>native</b> USB.</p></div>
+      <div class="card reveal"><div class="ico">🐢</div><h3>USB/Seriell ist langsam</h3><p>Die REPL läuft auf 115200 (~11 KB/s). Für Tempo: native USB + ESP‑IDF (bis ~6 Mbit/s) oder höhere Baud im eigenen Projekt.</p></div>
+    </div>
+
+    <h3 class="subhead reveal" style="margin:30px 0 14px">🧬 Silizium‑Errata (Rev v0.2) & MicroPython‑Configs</h3>
+    <div class="callout reveal"><div class="ic">ℹ️</div><div><b>Gute Nachricht zuerst:</b> Deine <b>v0.2</b> ist die <b>neueste</b> ESP32‑S3‑Revision — es gibt kein „Hardware‑Update", nur die <b>Errata‑/ROM‑Patches der ESP‑IDF</b> (mit <code>v6.0.1</code> aktuell). Von 8 offenen Errata werden die meisten <b>unterhalb der App‑Ebene automatisch</b> abgefangen; MicroPython erbt sie. Nur drei betreffen deine eigene Nutzung — hier die Lösung:</div></div>
+    <div class="grid g3" style="margin-top:18px">
+      <div class="card reveal"><div class="ico">📈</div><h3>ADC‑183 · ADC2 + WLAN</h3><p>Bei aktivem <b>WLAN/BLE</b> liefert <b>ADC2 (GPIO11–20)</b> verfälschte Werte. <b>Lösung:</b> für Analog‑Lesungen <b>nur ADC1‑Pins GPIO1–10</b> nehmen → <code>ADC(Pin(1))</code>.</p></div>
+      <div class="card reveal"><div class="ico">✋</div><h3>TOUCH‑100 · Touch‑ISR</h3><p>Der Touch‑<b>Interrupt‑Rohwert</b> ist undefiniert. <b>Lösung:</b> Touch <b>pollen</b> statt per ISR → <code>TouchPad(Pin(x)).read()</code> in der Schleife abfragen.</p></div>
+      <div class="card reveal"><div class="ico">🌈</div><h3>RMT‑176 · WS2812 Dauer‑TX</h3><p>Im RMT‑<b>Continuous‑Modus</b> stimmt der Idle‑Pegel nicht. <b>Lösung:</b> NeoPixel im <b>Einzel‑Schuss</b> <code>np.write()</code> (MicroPython‑Default) — kein Loop‑TX.</p></div>
+    </div>
+    <div class="callout ok reveal" style="margin-top:16px"><div class="ic">✅</div><div><b>Haben die Errata unsere Messungen verfälscht? Nein.</b> ADC lasen wir auf <b>GPIO1–4 = ADC1</b> (richtige Wahl), Touch per <b>Polling</b>, WS2812 im Einzel‑Schuss, und <b>Deep‑</b> statt Light‑Sleep — alle betroffenen Fälle vermieden. Die Durchsatz‑Tests (USB/WLAN/BLE/GPIO/Flash/PSRAM) berühren keine der Errata‑Peripherien. <b>Die gemessenen Bremsen waren rein firmware‑seitig</b> (UART‑stdout‑Spiegel, GIL).</div></div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- OFFIZIELLE INBETRIEBNAHME & TOOLS -->
+<section id="official">
+  <div class="wrap">
+    <div class="shead reveal">
+      <span class="kicker">Offizielle Inbetriebnahme & Tools</span>
+      <h2>So programmierst du das Board — nach Espressif</h2>
+      <p>Die offiziellen Wege, das Board zu nutzen — direkt aus Espressifs Dokumentation aufbereitet. (Dein Board entspricht dem <b>DevKitC‑1 v1.0</b>.)</p>
+    </div>
+
+    <div class="grid g3">
+      <div class="card reveal">
+        <div class="ico">🏗️</div><h3>ESP‑IDF</h3>
+        <p>Espressifs <b>offizielles</b> Entwicklungs‑Framework (C/C++ auf FreeRTOS). Volle Hardware‑Kontrolle, alle Peripherien. Einrichtung per Installer, VS‑Code‑Erweiterung oder Git.</p>
+        <a class="coffee-link" style="display:inline-block;margin-top:10px" href="https://docs.espressif.com/projects/esp-idf/en/stable/esp32s3/get-started/index.html" target="_blank" rel="noopener">Get‑Started ↗</a>
+      </div>
+      <div class="card reveal">
+        <div class="ico">🔌</div><h3>Arduino‑ESP32</h3>
+        <p>Der von <b>Espressif gepflegte</b> Arduino‑Core. Einfacher Einstieg, riesiges Library‑Ökosystem — über den Boards‑Manager der Arduino IDE.</p>
+        <a class="coffee-link" style="display:inline-block;margin-top:10px" href="https://docs.espressif.com/projects/arduino-esp32/en/latest/" target="_blank" rel="noopener">Arduino‑Doku ↗</a>
+      </div>
+      <div class="card reveal">
+        <div class="ico">🐍</div><h3>MicroPython</h3>
+        <p>Community‑Firmware: Python <b>direkt auf dem Chip</b>, ideal zum schnellen Ausprobieren ohne Kompilieren. (In diesem Guide verwendet.)</p>
+        <a class="coffee-link" style="display:inline-block;margin-top:10px" href="https://docs.micropython.org/en/latest/esp32/quickref.html" target="_blank" rel="noopener">Quick‑Reference ↗</a>
+      </div>
+    </div>
+
+    <div class="grid g2" style="margin-top:18px">
+      <div>
+        <h3 class="subhead reveal" style="margin:14px 0 14px">🚀 Offizieller ESP‑IDF‑Workflow</h3>
+        <div class="steps reveal">
+          <div class="step"><div><h3>Toolchain installieren</h3><p>ESP‑IDF per Installer (Windows), <code>VS Code</code>‑Erweiterung oder <code>git clone</code> + <code>install.sh</code>.</p></div></div>
+          <div class="step"><div><h3>Ziel-Chip setzen</h3><p><code>idf.py set-target esp32s3</code></p></div></div>
+          <div class="step"><div><h3>Bauen · flashen · beobachten</h3><p><code>idf.py -p PORT flash monitor</code></p></div></div>
+        </div>
+      </div>
+      <div>
+        <h3 class="subhead reveal" style="margin:14px 0 14px">📋 Anschluss & Praxis‑Hinweise</h3>
+        <div class="callout reveal" style="margin-top:0"><div class="ic">🔌</div><div><b>Anschluss (laut Espressif):</b> Zum Flashen den <b>USB‑to‑UART‑Port</b> nutzen (Standard). Der native USB‑Port (USB‑OTG, „USB 1.1") ist softwareseitig per Default <i>nicht</i> voll implementiert.</div></div>
+        <div class="callout reveal"><div class="ic">⚡</div><div><b>Stromversorgung (laut Espressif):</b> mindestens <b>5 V / 2 A</b> empfohlen; ein Port genügt.</div></div>
+        <div class="callout ok reveal"><div class="ic">🧩</div><div><b>Für dein Board:</b> ein <b>DevKitC‑1‑v1.0‑Klon</b> (USB‑C statt Micro‑USB, CH343 statt CP2102N) — die offiziellen Anleitungen gelten trotzdem 1:1.</div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- OFFIZIELLE RESSOURCEN & LINKS -->
+<section id="ressourcen">
+  <div class="wrap">
+    <div class="shead reveal">
+      <span class="kicker">Offizielle Ressourcen & Links</span>
+      <h2>Alles im Original bei Espressif</h2>
+      <p>Datenblätter, Schaltpläne, Programmier‑ und Tool‑Anleitungen — direkt von der Quelle (alle Links geprüft).</p>
+    </div>
+
+    <div class="cat-label reveal">🛠️ Das Board (DevKitC‑1)</div>
+    <div class="grid g2">
+      <a class="linkcard reveal" href="https://docs.espressif.com/projects/esp-dev-kits/en/latest/esp32s3/esp32-s3-devkitc-1/user_guide_v1.0.html" target="_blank" rel="noopener"><span class="lc-ico">📘</span><span class="lc-body"><h3>DevKitC‑1 v1.0 — User Guide</h3><p>Die zu deinem Board passende Version (LED auf GPIO48).</p><span class="lc-host">docs.espressif.com ↗</span></span></a>
+      <a class="linkcard reveal" href="https://docs.espressif.com/projects/esp-dev-kits/en/latest/esp32s3/esp32-s3-devkitc-1/index.html" target="_blank" rel="noopener"><span class="lc-ico">📖</span><span class="lc-body"><h3>DevKitC‑1 — Übersicht & v1.1</h3><p>Einstieg, Versionen, Hardware‑Revisionen.</p><span class="lc-host">docs.espressif.com ↗</span></span></a>
+      <a class="linkcard reveal" href="https://dl.espressif.com/dl/schematics/SCH_ESP32-S3-DevKitC-1_V1.1_20221130.pdf" target="_blank" rel="noopener"><span class="lc-ico">📐</span><span class="lc-body"><h3>Schaltplan (PDF)</h3><p>Offizieller Schaltplan des DevKitC‑1.</p><span class="lc-host">dl.espressif.com ↗</span></span></a>
+      <a class="linkcard reveal" href="https://www.espressif.com/en/products/devkits" target="_blank" rel="noopener"><span class="lc-ico">🧰</span><span class="lc-body"><h3>Alle Espressif‑DevKits</h3><p>Übersicht der offiziellen Entwicklungsboards.</p><span class="lc-host">espressif.com ↗</span></span></a>
+    </div>
+
+    <div class="cat-label reveal">🧠 Chip & Modul</div>
+    <div class="grid g2">
+      <a class="linkcard reveal" href="https://www.espressif.com/en/products/socs/esp32-s3" target="_blank" rel="noopener"><span class="lc-ico">🔷</span><span class="lc-body"><h3>ESP32‑S3 — Produktseite</h3><p>Features, Specs und Dokumente zum SoC.</p><span class="lc-host">espressif.com ↗</span></span></a>
+      <a class="linkcard reveal" href="https://www.espressif.com/sites/default/files/documentation/esp32-s3_datasheet_en.pdf" target="_blank" rel="noopener"><span class="lc-ico">📄</span><span class="lc-body"><h3>ESP32‑S3 — Datenblatt (PDF)</h3><p>Elektrische Specs, Funk, USB, Pinout.</p><span class="lc-host">espressif.com ↗</span></span></a>
+      <a class="linkcard reveal" href="https://www.espressif.com/sites/default/files/documentation/esp32-s3_technical_reference_manual_en.pdf" target="_blank" rel="noopener"><span class="lc-ico">📚</span><span class="lc-body"><h3>Technical Reference Manual (PDF)</h3><p>Register, Peripherie‑Details, USB‑Serial‑JTAG.</p><span class="lc-host">espressif.com ↗</span></span></a>
+      <a class="linkcard reveal" href="https://www.espressif.com/sites/default/files/documentation/esp32-s3-wroom-1_wroom-1u_datasheet_en.pdf" target="_blank" rel="noopener"><span class="lc-ico">🧩</span><span class="lc-body"><h3>WROOM‑1 — Modul‑Datenblatt (PDF)</h3><p>Das N16R8‑Modul: Pinbelegung, Maße.</p><span class="lc-host">espressif.com ↗</span></span></a>
+    </div>
+
+    <div class="cat-label reveal">💻 Programmieren & Tools</div>
+    <div class="grid g2">
+      <a class="linkcard reveal" href="https://docs.espressif.com/projects/esp-idf/en/stable/esp32s3/get-started/index.html" target="_blank" rel="noopener"><span class="lc-ico">🚀</span><span class="lc-body"><h3>ESP‑IDF — Get Started</h3><p>Installation, erster Build, Flashen, Monitor.</p><span class="lc-host">docs.espressif.com ↗</span></span></a>
+      <a class="linkcard reveal" href="https://docs.espressif.com/projects/esp-idf/en/stable/esp32s3/index.html" target="_blank" rel="noopener"><span class="lc-ico">📗</span><span class="lc-body"><h3>ESP‑IDF — Programming Guide</h3><p>Komplette API‑ und Peripherie‑Doku.</p><span class="lc-host">docs.espressif.com ↗</span></span></a>
+      <a class="linkcard reveal" href="https://docs.espressif.com/projects/esp-idf/en/stable/esp32s3/get-started/establish-serial-connection.html" target="_blank" rel="noopener"><span class="lc-ico">🔗</span><span class="lc-body"><h3>Serielle Verbindung herstellen</h3><p>Port finden, Treiber, Flashen über UART.</p><span class="lc-host">docs.espressif.com ↗</span></span></a>
+      <a class="linkcard reveal" href="https://docs.espressif.com/projects/arduino-esp32/en/latest/" target="_blank" rel="noopener"><span class="lc-ico">🔌</span><span class="lc-body"><h3>Arduino‑ESP32 — Doku</h3><p>Offizieller Arduino‑Core von Espressif.</p><span class="lc-host">docs.espressif.com ↗</span></span></a>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- SUPPORT / KAFFEE -->
+<section style="padding:64px 0">
+  <div class="wrap">
+    <div class="support reveal">
+      <div class="cup">☕</div>
+      <h3>Hat dir dieser Guide geholfen?</h3>
+      <p>In diesem Board‑Guide steckt viel Mess‑ und Detailarbeit. Wenn er dir geholfen oder Zeit gespart hat, freue ich mich über einen Kaffee — ganz ohne Druck.</p>
+      <a data-coffee class="btn btn-primary">☕ Kaffee spendieren</a>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <p><b>ESP32‑S3 N16R8</b> · 16 MB Flash · 8 MB Octal‑PSRAM · WiFi + BLE 5 · 2× USB‑C</p>
+    <p style="margin-top:6px">Interaktiver Board‑Guide — alle Messwerte real auf diesem Exemplar erhoben. 🌙 Dark‑Mode standardmäßig aktiv.</p>
+    <p style="margin-top:10px">☕ Gefällt dir der Guide? <a data-coffee class="coffee-link">Spendier mir einen Kaffee</a></p>
+  </div>
+</footer>
+
+<button id="toTop" aria-label="Nach oben scrollen" title="Nach oben">↑</button>
+
+<div class="coffee-pill" id="coffeePill">
+  <a data-coffee class="cp-link">☕ Kaffee?</a>
+  <button class="x" id="coffeePillX" aria-label="Hinweis ausblenden">×</button>
+</div>
+
+<script>
+/* ============================================================
+   ☕ KAFFEE-LINK (PayPal) — HIER deinen eigenen Link eintragen:
+   PayPal.Me:  https://paypal.me/DEINNAME
+   optional mit Betrag:  https://paypal.me/DEINNAME/3   (= 3 in Konto-Währung)
+   ============================================================ */
+const COFFEE_URL = "https://paypal.me/ChrisKuri";
+document.querySelectorAll('[data-coffee]').forEach(a=>{ a.href=COFFEE_URL; a.target="_blank"; a.rel="noopener"; });
+
+/* ---------- THEME ---------- */
+const root=document.documentElement, tbtn=document.getElementById('theme');
+function setIcon(){tbtn.textContent=root.getAttribute('data-theme')==='dark'?'🌙':'☀️';}
+setIcon();
+tbtn.onclick=()=>{const n=root.getAttribute('data-theme')==='dark'?'light':'dark';
+  root.setAttribute('data-theme',n);localStorage.setItem('theme',n);setIcon();};
+
+/* ---------- SPRACHWECHSEL: aktuellen Anker mitnehmen ---------- */
+document.getElementById('langSwitch').addEventListener('click',function(e){
+  if(location.hash){e.preventDefault();location.href=this.getAttribute('href')+location.hash;}
+});
+
+/* ---------- MOBILE NAV ---------- */
+const burger=document.getElementById('burger'),links=document.getElementById('navlinks');
+burger.onclick=()=>links.classList.toggle('open');
+links.querySelectorAll('a').forEach(a=>a.onclick=()=>links.classList.remove('open'));
+
+/* ---------- GPIO DATA ---------- */
+const PINS=[
+ {n:0,fn:'BOOT / Strapping',c:'strap'},
+ {n:1,fn:'frei',c:'free',adc:'ADC1',touch:1},
+ {n:2,fn:'frei',c:'free',adc:'ADC1',touch:2},
+ {n:3,fn:'Strapping',c:'strap',adc:'ADC1',touch:3},
+ {n:4,fn:'frei',c:'free',adc:'ADC1',touch:4},
+ {n:5,fn:'frei',c:'free',adc:'ADC1',touch:5},
+ {n:6,fn:'frei',c:'free',adc:'ADC1',touch:6},
+ {n:7,fn:'frei',c:'free',adc:'ADC1',touch:7},
+ {n:8,fn:'frei',c:'free',adc:'ADC1',touch:8},
+ {n:9,fn:'frei',c:'free',adc:'ADC1',touch:9},
+ {n:10,fn:'frei',c:'free',adc:'ADC1',touch:10},
+ {n:11,fn:'frei',c:'free',adc:'ADC2',touch:11},
+ {n:12,fn:'frei',c:'free',adc:'ADC2',touch:12},
+ {n:13,fn:'frei',c:'free',adc:'ADC2',touch:13},
+ {n:14,fn:'frei',c:'free',adc:'ADC2',touch:14},
+ {n:15,fn:'frei',c:'free',adc:'ADC2'},
+ {n:16,fn:'frei',c:'free',adc:'ADC2'},
+ {n:17,fn:'frei',c:'free',adc:'ADC2'},
+ {n:18,fn:'frei',c:'free',adc:'ADC2'},
+ {n:19,fn:'USB D−',c:'special',adc:'ADC2'},
+ {n:20,fn:'USB D+',c:'special',adc:'ADC2'},
+ {n:21,fn:'frei',c:'free'},
+ {n:26,fn:'SPI‑Flash',c:'taboo'},
+ {n:27,fn:'SPI‑Flash',c:'taboo'},
+ {n:28,fn:'SPI‑Flash',c:'taboo'},
+ {n:29,fn:'SPI‑Flash',c:'taboo'},
+ {n:30,fn:'SPI‑Flash',c:'taboo'},
+ {n:31,fn:'SPI‑Flash',c:'taboo'},
+ {n:32,fn:'SPI‑Flash',c:'taboo'},
+ {n:33,fn:'Octal‑PSRAM',c:'taboo'},
+ {n:34,fn:'Octal‑PSRAM',c:'taboo'},
+ {n:35,fn:'Octal‑PSRAM',c:'taboo'},
+ {n:36,fn:'Octal‑PSRAM',c:'taboo'},
+ {n:37,fn:'Octal‑PSRAM',c:'taboo'},
+ {n:38,fn:'frei',c:'free'},
+ {n:39,fn:'frei',c:'free'},
+ {n:40,fn:'frei',c:'free'},
+ {n:41,fn:'frei',c:'free'},
+ {n:42,fn:'frei',c:'free'},
+ {n:43,fn:'UART0 TX',c:'special'},
+ {n:44,fn:'UART0 RX',c:'special'},
+ {n:45,fn:'Strapping',c:'strap'},
+ {n:46,fn:'Strapping',c:'strap'},
+ {n:47,fn:'frei',c:'free'},
+ {n:48,fn:'RGB‑LED (WS2812)',c:'special'},
+];
+const grid=document.getElementById('pingrid');
+function renderPins(f){
+  grid.innerHTML='';
+  PINS.filter(p=>{
+    if(f==='all')return true;
+    if(f==='adc')return !!p.adc;
+    if(f==='touch')return !!p.touch;
+    return p.c===f;
+  }).forEach(p=>{
+    const el=document.createElement('div');
+    el.className='pin c-'+p.c;
+    let badges='';
+    if(p.adc)badges+=`<span class="mini">${p.adc}</span>`;
+    if(p.touch)badges+=`<span class="mini">T${p.touch}</span>`;
+    el.innerHTML=`<span class="stripe"></span>
+      <div class="gp"><span class="pdot"></span>GPIO ${p.n}</div>
+      <div class="fn">${p.fn}</div>
+      ${badges?`<div class="badges">${badges}</div>`:''}`;
+    grid.appendChild(el);
+  });
+}
+renderPins('all');
+document.querySelectorAll('#filters .fbtn').forEach(b=>b.onclick=()=>{
+  document.querySelectorAll('#filters .fbtn').forEach(x=>x.classList.remove('active'));
+  b.classList.add('active');renderPins(b.dataset.f);
+});
+
+/* ---------- CODE RECIPES ---------- */
+const RECIPES=[
+ {t:'RGB‑LED',code:
+`<span class="cmt"># WS2812 an GPIO48 – Regenbogen</span>
+<span class="kw">import</span> neopixel, machine, time
+np = neopixel.<span class="fn">NeoPixel</span>(machine.<span class="fn">Pin</span>(<span class="nm">48</span>), <span class="nm">1</span>)
+<span class="kw">for</span> c <span class="kw">in</span> [(<span class="nm">80</span>,<span class="nm">0</span>,<span class="nm">0</span>),(<span class="nm">0</span>,<span class="nm">80</span>,<span class="nm">0</span>),(<span class="nm">0</span>,<span class="nm">0</span>,<span class="nm">80</span>)]:
+    np[<span class="nm">0</span>] = c; np.<span class="fn">write</span>(); time.<span class="fn">sleep</span>(<span class="nm">0.4</span>)
+np[<span class="nm">0</span>] = (<span class="nm">0</span>,<span class="nm">0</span>,<span class="nm">0</span>); np.<span class="fn">write</span>()`},
+ {t:'WiFi‑Scan',code:
+`<span class="cmt"># Netzwerke in Reichweite scannen</span>
+<span class="kw">import</span> network
+w = network.<span class="fn">WLAN</span>(network.STA_IF); w.<span class="fn">active</span>(<span class="kw">True</span>)
+<span class="kw">for</span> n <span class="kw">in</span> w.<span class="fn">scan</span>():
+    <span class="fn">print</span>(n[<span class="nm">0</span>].<span class="fn">decode</span>(), n[<span class="nm">3</span>], <span class="st">"dBm  ch"</span>, n[<span class="nm">2</span>])`},
+ {t:'WiFi‑Verbinden',code:
+`<span class="kw">import</span> network, time
+w = network.<span class="fn">WLAN</span>(network.STA_IF); w.<span class="fn">active</span>(<span class="kw">True</span>)
+w.<span class="fn">connect</span>(<span class="st">"SSID"</span>, <span class="st">"passwort"</span>)
+<span class="kw">while</span> <span class="kw">not</span> w.<span class="fn">isconnected</span>(): time.<span class="fn">sleep</span>(<span class="nm">0.3</span>)
+<span class="fn">print</span>(<span class="st">"IP:"</span>, w.<span class="fn">ifconfig</span>()[<span class="nm">0</span>])`},
+ {t:'PSRAM prüfen',code:
+`<span class="cmt"># Zeigt ~8 MB nur mit der OCT-Firmware</span>
+<span class="kw">import</span> gc; gc.<span class="fn">collect</span>()
+<span class="fn">print</span>(<span class="st">"Freier Heap:"</span>, gc.<span class="fn">mem_free</span>()//<span class="nm">1024</span>, <span class="st">"KB"</span>)
+buf = <span class="fn">bytearray</span>(<span class="nm">7</span>*<span class="nm">1024</span>*<span class="nm">1024</span>)  <span class="cmt"># 7 MB in PSRAM</span>
+<span class="fn">print</span>(<span class="st">"7 MB allokiert:"</span>, <span class="fn">len</span>(buf))`},
+ {t:'ADC lesen',code:
+`<span class="cmt"># Analogwert an einem freien ADC-Pin</span>
+<span class="kw">from</span> machine <span class="kw">import</span> ADC, Pin
+a = <span class="fn">ADC</span>(<span class="fn">Pin</span>(<span class="nm">4</span>)); a.<span class="fn">atten</span>(ADC.ATTN_11DB)
+<span class="fn">print</span>(a.<span class="fn">read_uv</span>()/<span class="nm">1e6</span>, <span class="st">"V"</span>)`},
+ {t:'Touch',code:
+`<span class="cmt"># Kapazitiver Touch (GPIO1–14)</span>
+<span class="kw">from</span> machine <span class="kw">import</span> TouchPad, Pin
+t = <span class="fn">TouchPad</span>(<span class="fn">Pin</span>(<span class="nm">5</span>))
+<span class="fn">print</span>(<span class="st">"Touch-Wert:"</span>, t.<span class="fn">read</span>())`},
+ {t:'Temp‑Sensor',code:
+`<span class="cmt"># Interner Chip-Temperatursensor</span>
+<span class="kw">import</span> esp32
+<span class="fn">print</span>(esp32.<span class="fn">mcu_temperature</span>(), <span class="st">"°C"</span>)`},
+ {t:'Deep‑Sleep',code:
+`<span class="cmt"># 10 s Tiefschlaf, Timer-Wake</span>
+<span class="kw">import</span> machine
+<span class="fn">print</span>(<span class="st">"Schlafe..."</span>)
+machine.<span class="fn">deepsleep</span>(<span class="nm">10000</span>)  <span class="cmt"># weckt + bootet neu</span>`},
+];
+const tabs=document.getElementById('tabs'),panes=document.getElementById('panes');
+RECIPES.forEach((r,i)=>{
+  const tb=document.createElement('button');tb.className='tab'+(i===0?' active':'');tb.textContent=r.t;
+  tb.onclick=()=>{document.querySelectorAll('#tabs .tab').forEach(x=>x.classList.remove('active'));
+    document.querySelectorAll('#panes .codepane').forEach(x=>x.classList.remove('active'));
+    tb.classList.add('active');document.getElementById('pane'+i).classList.add('active');};
+  tabs.appendChild(tb);
+  const pane=document.createElement('div');pane.className='codepane'+(i===0?' active':'');pane.id='pane'+i;
+  pane.innerHTML=`<div class="codeblock"><button class="copy">Kopieren</button><pre><code>${r.code}</code></pre></div>`;
+  panes.appendChild(pane);
+});
+
+/* ---------- COPY ---------- */
+document.addEventListener('click',e=>{
+  if(!e.target.classList.contains('copy'))return;
+  const code=e.target.parentElement.querySelector('code').innerText;
+  navigator.clipboard.writeText(code).then(()=>{
+    const o=e.target.textContent;e.target.textContent='✓ Kopiert';
+    setTimeout(()=>e.target.textContent=o,1400);
+  });
+});
+
+/* ---------- REVEAL + BENCH ---------- */
+const io=new IntersectionObserver(es=>{es.forEach(en=>{
+  if(en.isIntersecting){en.target.classList.add('in');
+    en.target.querySelectorAll?.('.fill').forEach(f=>f.style.width=f.dataset.w+'%');
+    io.unobserve(en.target);}
+});},{threshold:.12});
+document.querySelectorAll('.reveal').forEach(el=>io.observe(el));
+document.querySelectorAll('#bench .card').forEach(el=>io.observe(el));
+
+/* ---------- NACH OBEN ---------- */
+const toTop=document.getElementById('toTop');
+addEventListener('scroll',()=>toTop.classList.toggle('show',window.scrollY>600),{passive:true});
+toTop.onclick=()=>window.scrollTo({top:0,behavior:'smooth'});
+
+/* ---------- KAFFEE-PILLE (wegklickbar) ---------- */
+const pill=document.getElementById('coffeePill');
+if(pill){
+  if(localStorage.getItem('coffeeHidden')){ pill.remove(); }
+  else {
+    addEventListener('scroll',()=>pill.classList.toggle('show',window.scrollY>700),{passive:true});
+    document.getElementById('coffeePillX').addEventListener('click',e=>{
+      e.preventDefault(); e.stopPropagation();
+      pill.classList.remove('show'); localStorage.setItem('coffeeHidden','1');
+      setTimeout(()=>pill.remove(),300);
+    });
+  }
+}
+</script>
+</body>
+</html>
